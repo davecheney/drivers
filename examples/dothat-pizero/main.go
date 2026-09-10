@@ -6,25 +6,26 @@
 // board needs its own mapping. See the epd2in13-pizero demo in this
 // examples tree for how that mapping was measured.
 //
-// The RP2040-PiZero has a Raspberry Pi 40 pin header. Waveshare exchanges
-// GPIO10 and GPIO11 on the header so that RP2040 SPI1 SCK and TX align with
-// the Raspberry Pi SCLK and MOSI positions. Every other header pin passes
-// straight through to the RP2040 GPIO of the same number.
+// The RP2040-PiZero does not map every header pin to the RP2040 GPIO of
+// the same number. Waveshare rearranges the pins around the SPI block so
+// that GPIO10 and GPIO11 land on the Raspberry Pi SCLK and MOSI positions,
+// which shifts GPIO12 onto pin 21 and puts GPIO9 on pin 32. The reset line
+// therefore has to be driven from GPIO9, not GPIO12.
 // Schematic: https://files.waveshare.com/wiki/RP2040-PiZero/RP2040-PiZero.pdf
 //
 // Header to RP2040 GPIO for the Display-o-Tron HAT signals:
 //
 //	pin 3  SDA          GPIO2  (I2C1 SDA)
 //	pin 5  SCL          GPIO3  (I2C1 SCL)
-//	pin 19 LCD MOSI     GPIO11 (SPI1 SDO)
+//	pin 19 LCD MOSI     GPIO11 (bit-banged data)
 //	pin 22 LCD RS       GPIO25
-//	pin 23 LCD SCLK     GPIO10 (SPI1 SCK)
+//	pin 23 LCD SCLK     GPIO10 (bit-banged clock)
 //	pin 24 LCD CS       GPIO8
-//	pin 32 LCD RESET    GPIO12
+//	pin 32 LCD RESET    GPIO9
 //
-// The LCD is write only, so SPI1 SDI is left unconfigured (NoPin) and
-// GPIO12, which doubles as SPI1's native SDI pin, is safe to drive as a
-// plain reset output.
+// The LCD link is bit-banged rather than driven by the SPI1 peripheral.
+// Both were tested on this board: the SPI1 version leaves the display
+// blank, the bit-banged version works.
 //
 // The SN3218 backlight driver and CAP1166 touch and bar graph controller
 // both sit on I2C1, at their fixed addresses 0x54 and 0x2C.
@@ -49,29 +50,69 @@ var (
 	touch cap1166.Device
 )
 
+// bitbangSPI is a software SPI master, MSB first, mode 0 (clock idle low,
+// data sampled on the rising edge). Used here instead of the RP2040's SPI1
+// hardware peripheral, since that peripheral produced no visible signal on
+// GPIO11 (the LCD data pin) during scope debugging.
+type bitbangSPI struct {
+	sck, sdo machine.Pin
+}
+
+func newBitbangSPI(sck, sdo machine.Pin) bitbangSPI {
+	sck.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	sdo.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	sck.Low()
+	sdo.Low()
+	return bitbangSPI{sck: sck, sdo: sdo}
+}
+
+func (b bitbangSPI) Transfer(out byte) (byte, error) {
+	for i := 7; i >= 0; i-- {
+		if out&(1<<uint(i)) != 0 {
+			b.sdo.High()
+		} else {
+			b.sdo.Low()
+		}
+		delay()
+		b.sck.High()
+		delay()
+		b.sck.Low()
+	}
+	return 0, nil
+}
+
+// delay holds each clock phase long enough to keep the bit-banged link
+// near 100kHz. The ST7036 is rated for 1MHz at most, and the Pimoroni
+// driver runs it at that speed.
+func delay() {
+	for i := 0; i < 40; i++ {
+		machine.GPIO0.Get()
+	}
+}
+
+func (b bitbangSPI) Tx(w, r []byte) error {
+	for _, out := range w {
+		if _, err := b.Transfer(out); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func main() {
 	// Wait for the USB serial console to attach so the log is not lost.
 	time.Sleep(3 * time.Second)
 
-	err := machine.SPI1.Configure(machine.SPIConfig{
-		Frequency: 1000000,
-		SCK:       machine.GPIO10,
-		SDO:       machine.GPIO11,
-		SDI:       machine.NoPin,
-		Mode:      0,
-	})
-	if err != nil {
-		println("SPI1 configure failed:", err.Error())
-		return
-	}
+	lcdBus := newBitbangSPI(machine.GPIO10, machine.GPIO11)
 
-	lcd = st7036.New(machine.SPI1, machine.GPIO8, machine.GPIO25, machine.GPIO12)
+	lcd = st7036.New(lcdBus, machine.GPIO8, machine.GPIO25, machine.GPIO9)
 	if err := lcd.Configure(st7036.Config{Rows: 3, Columns: 16}); err != nil {
 		println("LCD configure failed:", err.Error())
 		return
 	}
+	println("LCD configure ok")
 
-	err = machine.I2C1.Configure(machine.I2CConfig{
+	err := machine.I2C1.Configure(machine.I2CConfig{
 		Frequency: 400000,
 		SDA:       machine.GPIO2,
 		SCL:       machine.GPIO3,
@@ -92,8 +133,12 @@ func main() {
 		println("touch configure failed:", err.Error())
 		return
 	}
+	// The white bar graph LEDs are uncomfortably bright, keep them off.
+	touch.GraphOff()
 
 	println("Display-o-Tron HAT bring-up")
+	lcd.SetContrast(0x3F)
+	lcd.SetDisplayMode(true, true, true)
 	lcd.SetCursorPosition(0, 0)
 	lcd.Write([]byte("Display-o-Tron"))
 	lcd.SetCursorPosition(0, 1)
@@ -124,10 +169,6 @@ func main() {
 		} else {
 			lastButton = ""
 		}
-
-		// Use the bar graph to show backlight hue as a fraction of the
-		// colour wheel, so it pulses in time with the backlight sweep.
-		touch.SetGraph(hue)
 
 		time.Sleep(20 * time.Millisecond)
 	}
