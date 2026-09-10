@@ -137,12 +137,15 @@ func main() {
 	touch.GraphOff()
 
 	println("Display-o-Tron HAT bring-up")
-	lcd.SetContrast(0x3F)
-	lcd.SetDisplayMode(true, true, true)
+	// 50 reads well head on with this panel. The Pimoroni default of 40
+	// leaves the characters looking like solid blocks.
+	contrast := uint8(50)
+	lcd.SetContrast(contrast)
+	lcd.SetDisplayMode(true, false, false)
 	lcd.SetCursorPosition(0, 0)
 	lcd.Write([]byte("Display-o-Tron"))
 	lcd.SetCursorPosition(0, 1)
-	lcd.Write([]byte("touch a button"))
+	lcd.Write([]byte("up/dn: contrast"))
 
 	lastButton := ""
 	var hue float32
@@ -162,8 +165,25 @@ func main() {
 			if name != lastButton {
 				lastButton = name
 				println("pressed:", name)
+
+				// Up and down tune the contrast, so the best value
+				// for a given panel can be found by eye.
+				switch name {
+				case "up":
+					if contrast < 0x3F {
+						contrast++
+						lcd.SetContrast(contrast)
+					}
+				case "down":
+					if contrast > 0 {
+						contrast--
+						lcd.SetContrast(contrast)
+					}
+				}
+
 				lcd.SetCursorPosition(0, 2)
-				lcd.Write([]byte(name + "           "))
+				lcd.Write([]byte(pad(name+" c="+itoa(int(contrast)), 16)))
+				println("contrast:", contrast)
 			}
 			touch.ClearInterrupt()
 		} else {
@@ -172,6 +192,30 @@ func main() {
 
 		time.Sleep(20 * time.Millisecond)
 	}
+}
+
+// pad returns s padded with spaces to width, so a shorter line fully
+// overwrites whatever was on the display before.
+func pad(s string, width int) string {
+	for len(s) < width {
+		s += " "
+	}
+	return s[:width]
+}
+
+// itoa formats a small non-negative integer.
+func itoa(v int) string {
+	if v == 0 {
+		return "0"
+	}
+	var buf [3]byte
+	i := len(buf)
+	for v > 0 {
+		i--
+		buf[i] = byte('0' + v%10)
+		v /= 10
+	}
+	return string(buf[i:])
 }
 
 // buttonName returns the label of the lowest numbered touched input in
