@@ -1,6 +1,10 @@
 package st7789
 
-import "tinygo.org/x/drivers"
+import (
+	"image/color"
+
+	"tinygo.org/x/drivers"
+)
 
 // Registers
 const (
@@ -21,6 +25,9 @@ const (
 	RAMWR      = 0x2C
 	RAMRD      = 0x2E
 	PTLAR      = 0x30
+	TEOFF      = 0x34
+	TEON       = 0x35
+	STE        = 0x44
 	COLMOD     = 0x3A
 	MADCTL     = 0x36
 	MADCTL_MY  = 0x80
@@ -34,6 +41,7 @@ const (
 	RDID2      = 0xDB
 	RDID3      = 0xDC
 	RDID4      = 0xDD
+	RAMCTRL    = 0xB0
 	FRMCTR1    = 0xB1
 	RGBCTRL    = 0xB1
 	FRMCTR2    = 0xB2
@@ -41,6 +49,12 @@ const (
 	FRMCTR3    = 0xB3
 	INVCTR     = 0xB4
 	DISSET5    = 0xB6
+	GCTRL      = 0xB7
+	VCOMS      = 0xBB
+	LCMCTRL    = 0xC0
+	VDVVRHEN   = 0xC2
+	VRHS       = 0xC3
+	VDVS       = 0xC4
 	PWCTR1     = 0xC0
 	PWCTR2     = 0xC1
 	PWCTR3     = 0xC2
@@ -99,3 +113,11 @@ const (
 
 	MAX_VSYNC_SCANLINES = 254
 )
+
+// RGBATo565 converts a color.RGBA to uint16 (RGB565).
+func RGBATo565(c color.RGBA) uint16 {
+	r, g, b, _ := c.RGBA()
+	return uint16((r & 0xF800) +
+		((g & 0xFC00) >> 5) +
+		((b & 0xF800) >> 11))
+}
