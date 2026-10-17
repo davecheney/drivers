@@ -81,7 +81,19 @@ It clears to white, shows four bordered swatches with an orientation marker,
 then enters deep sleep. The [gradient test](../examples/badger2040/grayscale-gradient)
 draws a 280x64 horizontal bar from white on the left to black on the right.
 It uses an 8x8 Bayer matrix to dither between adjacent shades of the four-shade
-palette, preserves solid endpoints, and enters deep sleep after one refresh.
+palette and preserves solid endpoints. Up increases dark-gray pulse frames
+(darker), Down decreases them (lighter). A increases light-gray frames (darker),
+B decreases them (lighter). Each debounced press changes one frame at 100Hz.
+The screen and serial output show the current dark (`D`) and light (`L`) values.
+Adjustments retain `0 < light < dark < 32`; opposing buttons cancel.
+
+Each gradient update hard-resets and reinitializes the controller, then displays
+solid black before the gradient. Both refreshes include the driver's full white
+reset, giving a white, black, white, gradient sequence to clear the previous image.
+Wait for the activity LED to turn off before the next press. Holding a button
+does not repeat. The example stays awake for input. Values reset to 10/4 after
+a restart and are not saved to flash.
+
 The [single-image test](../examples/badger2040/grayscale-image)
 shows the supplied Tainigo sticker once, then enters deep sleep without
 stage pauses. The optional slideshow displays the four supplied photographs

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"image/color"
 	"testing"
+
+	"tinygo.org/x/drivers/uc8151"
 )
 
 func TestBayerRanks(t *testing.T) {
@@ -60,13 +62,22 @@ func TestBayerGray(t *testing.T) {
 }
 
 type gradientDisplay struct {
-	t         *testing.T
-	pixels    [296 * 128]color.RGBA
-	refreshes int
-	err       error
+	t           *testing.T
+	pixels      [296 * 128]color.RGBA
+	frames      [][296 * 128]color.RGBA
+	configs     []uc8151.GrayscaleConfig
+	refreshes   int
+	err         error
+	configErr   error
+	failRefresh int
 }
 
 func (d *gradientDisplay) Size() (int16, int16) { return 296, 128 }
+
+func (d *gradientDisplay) Configure(cfg uc8151.GrayscaleConfig) error {
+	d.configs = append(d.configs, cfg)
+	return d.configErr
+}
 
 func (d *gradientDisplay) SetPixel(x, y int16, c color.RGBA) {
 	d.t.Helper()
@@ -78,12 +89,16 @@ func (d *gradientDisplay) SetPixel(x, y int16, c color.RGBA) {
 
 func (d *gradientDisplay) Display() error {
 	d.refreshes++
-	return d.err
+	d.frames = append(d.frames, d.pixels)
+	if d.failRefresh == 0 || d.failRefresh == d.refreshes {
+		return d.err
+	}
+	return nil
 }
 
 func TestGradient(t *testing.T) {
 	d := &gradientDisplay{t: t}
-	if err := showGradient(d); err != nil {
+	if err := showGradient(d, defaultCalibration()); err != nil {
 		t.Fatal(err)
 	}
 	if d.refreshes != 1 {
@@ -106,8 +121,8 @@ func TestGradient(t *testing.T) {
 				if got.R != want {
 					t.Fatalf("gradient at %d,%d = %d, want %d", x, y, got.R, want)
 				}
-			} else if y >= 96 && got.R != 255 {
-				t.Fatalf("background at %d,%d is not white", x, y)
+			} else if y >= 96 && got.R != 255 && got.R != 0 {
+				t.Fatalf("status at %d,%d is not black on white", x, y)
 			}
 		}
 	}
@@ -125,7 +140,7 @@ func TestGradient(t *testing.T) {
 
 func TestGradientDisplayError(t *testing.T) {
 	d := &gradientDisplay{t: t, err: errors.New("SPI failure")}
-	if err := showGradient(d); !errors.Is(err, d.err) {
+	if err := showGradient(d, defaultCalibration()); !errors.Is(err, d.err) {
 		t.Fatalf("display error = %v, want %v", err, d.err)
 	}
 }

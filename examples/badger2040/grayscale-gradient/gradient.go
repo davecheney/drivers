@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"strconv"
 
 	"tinygo.org/x/drivers"
 	"tinygo.org/x/tinyfont"
@@ -27,7 +28,7 @@ func bayerGray(gray uint8, x, y int16) uint8 {
 	return level * 85
 }
 
-func showGradient(display drivers.Displayer) error {
+func showGradient(display drivers.Displayer, cal calibration) error {
 	w, h := display.Size()
 	const left int16 = 8
 	right, top, bottom := w-8, h/4, h*3/4
@@ -44,5 +45,7 @@ func showGradient(display drivers.Displayer) error {
 	black := color.RGBA{A: 255}
 	tinyfont.WriteLine(display, &freemono.Regular9pt7b, left, top-12, "WHITE", black)
 	tinyfont.WriteLine(display, &freemono.Regular9pt7b, right-60, top-12, "BLACK", black)
+	status := "D" + strconv.Itoa(int(cal.dark)) + " U+/D- L" + strconv.Itoa(int(cal.light)) + " A+/B-"
+	tinyfont.WriteLine(display, &freemono.Regular9pt7b, left, h-10, status, black)
 	return display.Display()
 }
