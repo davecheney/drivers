@@ -8,18 +8,6 @@ import (
 	"tinygo.org/x/drivers/uc8151"
 )
 
-func TestBayerRanks(t *testing.T) {
-	var seen [64]bool
-	for _, row := range bayer8 {
-		for _, rank := range row {
-			if rank >= 64 || seen[rank] {
-				t.Fatalf("invalid or repeated Bayer rank %d", rank)
-			}
-			seen[rank] = true
-		}
-	}
-}
-
 func TestBayerGray(t *testing.T) {
 	for gray := 0; gray < 256; gray++ {
 		var sum int

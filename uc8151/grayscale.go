@@ -119,9 +119,18 @@ func (d *GrayscaleDevice) Configure(cfg GrayscaleConfig) error {
 
 // SetPixel sets one buffered pixel using RGB luminance, ignoring alpha.
 func (d *GrayscaleDevice) SetPixel(x, y int16, c color.RGBA) {
+	index, shift, ok := d.pixelIndex(x, y)
+	if !ok {
+		return
+	}
+	shade := byte(pixel.NewGrayscale2bit(c.R, c.G, c.B))
+	d.buffer[index] = d.buffer[index]&^(3<<shift) | shade<<shift
+}
+
+func (d *GrayscaleDevice) pixelIndex(x, y int16) (int, uint, bool) {
 	w, h := d.Size()
 	if x < 0 || y < 0 || x >= w || y >= h {
-		return
+		return 0, 0, false
 	}
 	switch d.rotation {
 	case drivers.Rotation90:
@@ -131,10 +140,7 @@ func (d *GrayscaleDevice) SetPixel(x, y int16, c color.RGBA) {
 	case drivers.Rotation270:
 		x, y = y, EPD_HEIGHT-x-1
 	}
-	index := (int(y)*EPD_WIDTH + int(x)) / 4
-	shift := uint(6 - (x%4)*2)
-	shade := byte(pixel.NewGrayscale2bit(c.R, c.G, c.B))
-	d.buffer[index] = d.buffer[index]&^(3<<shift) | shade<<shift
+	return (int(y)*EPD_WIDTH + int(x)) / 4, uint(6 - (x%4)*2), true
 }
 
 // ClearBuffer fills the framebuffer with white without refreshing the panel.
@@ -165,16 +171,22 @@ func (d *GrayscaleDevice) refresh(white bool) error {
 	if err := d.writeLUTs(white); err != nil {
 		return err
 	}
+	return d.refreshPlanes(func(command byte, old bool) error {
+		return d.sendPlane(command, old, white)
+	})
+}
+
+func (d *GrayscaleDevice) refreshPlanes(send func(command byte, old bool) error) error {
 	if err := d.writeRegister(PON, nil); err != nil {
 		return err
 	}
 	if err := d.writeRegister(PTOU, nil); err != nil {
 		return err
 	}
-	if err := d.sendPlane(DTM1, true, white); err != nil {
+	if err := send(DTM1, true); err != nil {
 		return err
 	}
-	if err := d.sendPlane(DTM2, false, white); err != nil {
+	if err := send(DTM2, false); err != nil {
 		return err
 	}
 	if err := d.writeRegister(DRF, nil); err != nil {

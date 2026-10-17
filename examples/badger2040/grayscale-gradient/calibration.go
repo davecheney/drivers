@@ -2,33 +2,22 @@ package main
 
 import (
 	"image/color"
-	"time"
 
 	"tinygo.org/x/drivers"
-	"tinygo.org/x/drivers/internal/pin"
+	"tinygo.org/x/drivers/examples/badger2040/internal/controls"
 	"tinygo.org/x/drivers/uc8151"
 )
 
-type buttons uint8
+type buttons = controls.Buttons
+type buttonPins = controls.Pins
+type buttonDebouncer = controls.Debouncer
 
 const (
-	buttonUp buttons = 1 << iota
-	buttonDown
-	buttonA
-	buttonB
+	buttonUp   = controls.Up
+	buttonDown = controls.Down
+	buttonA    = controls.A
+	buttonB    = controls.B
 )
-
-type buttonPins [4]pin.Input
-
-func (pins buttonPins) read() buttons {
-	var pressed buttons
-	for i, pin := range pins {
-		if pin.Get() {
-			pressed |= 1 << uint(i)
-		}
-	}
-	return pressed
-}
 
 type calibration struct {
 	dark, light byte
@@ -69,26 +58,6 @@ func (c *calibration) adjust(pressed buttons) bool {
 		}
 	}
 	return *c != before
-}
-
-const buttonDebounce = 30 * time.Millisecond
-
-type buttonDebouncer struct {
-	last, stable buttons
-	changed      time.Time
-}
-
-func (b *buttonDebouncer) update(raw buttons, now time.Time) buttons {
-	if raw != b.last {
-		b.last = raw
-		b.changed = now
-	}
-	if now.Sub(b.changed) < buttonDebounce {
-		return 0
-	}
-	pressed := raw &^ b.stable
-	b.stable = raw
-	return pressed
 }
 
 type gradientController interface {

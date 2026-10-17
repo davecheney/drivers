@@ -21,7 +21,7 @@ func TestActiveHighButtons(t *testing.T) {
 			buttonLevel(mask&buttonA != 0),
 			buttonLevel(mask&buttonB != 0),
 		}
-		if got := pins.read(); got != mask {
+		if got := pins.Read(); got != mask {
 			t.Fatalf("HIGH pin mask %04b gives buttons %04b", mask, got)
 		}
 	}
@@ -109,7 +109,7 @@ func TestButtonDebounce(t *testing.T) {
 		{5090, buttonUp, 0},
 		{5120, buttonUp, buttonUp},
 	} {
-		if got := debounce.update(tc.raw, start.Add(time.Duration(tc.ms)*time.Millisecond)); got != tc.want {
+		if got := debounce.Update(tc.raw, start.Add(time.Duration(tc.ms)*time.Millisecond)); got != tc.want {
 			t.Fatalf("at %dms: pressed %d, want %d", tc.ms, got, tc.want)
 		}
 	}

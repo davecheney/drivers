@@ -5,27 +5,13 @@ import (
 	"strconv"
 
 	"tinygo.org/x/drivers"
+	"tinygo.org/x/drivers/examples/badger2040/internal/dither"
 	"tinygo.org/x/tinyfont"
 	"tinygo.org/x/tinyfont/freemono"
 )
 
-var bayer8 = [8][8]uint8{
-	{0, 48, 12, 60, 3, 51, 15, 63},
-	{32, 16, 44, 28, 35, 19, 47, 31},
-	{8, 56, 4, 52, 11, 59, 7, 55},
-	{40, 24, 36, 20, 43, 27, 39, 23},
-	{2, 50, 14, 62, 1, 49, 13, 61},
-	{34, 18, 46, 30, 33, 17, 45, 29},
-	{10, 58, 6, 54, 9, 57, 5, 53},
-	{42, 26, 38, 22, 41, 25, 37, 21},
-}
-
 func bayerGray(gray uint8, x, y int16) uint8 {
-	level := gray / 85
-	if uint16(gray%85)*128 > (2*uint16(bayer8[y&7][x&7])+1)*85 {
-		level++
-	}
-	return level * 85
+	return dither.Four(gray, x, y)
 }
 
 func showGradient(display drivers.Displayer, cal calibration) error {

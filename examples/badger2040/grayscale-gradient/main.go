@@ -28,7 +28,7 @@ func run() error {
 		return err
 	}
 	println("Badger grayscale gradient: white to black, 8x8 Bayer, four shades")
-	println("Badger button mask (HIGH=pressed):", pins.read())
+	println("Badger button mask (HIGH=pressed):", pins.Read())
 	cal := defaultCalibration()
 	if err := updateDisplay(display, cal); err != nil {
 		return err
@@ -36,7 +36,7 @@ func run() error {
 	var debounce buttonDebouncer
 	for {
 		time.Sleep(10 * time.Millisecond)
-		if cal.adjust(debounce.update(pins.read(), time.Now())) {
+		if cal.adjust(debounce.Update(pins.Read(), time.Now())) {
 			if err := updateDisplay(display, cal); err != nil {
 				return err
 			}

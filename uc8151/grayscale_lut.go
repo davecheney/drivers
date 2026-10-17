@@ -42,6 +42,10 @@ func (d *GrayscaleDevice) writeLUTs(white bool) error {
 		tables[2] = LUTType{0x55, 32, 0, 0, 0, 1}
 		tables[3] = LUTType{0x55, d.darkFrames, 0, 0, 0, 1}
 	}
+	return d.writeGrayscaleLUTs(&vcom, &tables)
+}
+
+func (d *GrayscaleDevice) writeGrayscaleLUTs(vcom *[44]byte, tables *[4]LUTType) error {
 	if err := d.writeRegister(LUT_VCOM, vcom[:]); err != nil {
 		return err
 	}

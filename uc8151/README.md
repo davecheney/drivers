@@ -65,6 +65,48 @@ slideshow has only been built offline. This does not establish long-term
 panel behavior or replace the monochrome speed, flicker-free, or
 partial-update API.
 
+## Experimental sixteen shades
+
+`NewGrayscale16` and `Grayscale16Config` provide a separate experimental 4bpp
+path. The four-shade API and its L5/D9 defaults are unchanged. The 18,944-byte
+framebuffer uses two packed 2bpp planes. RGB luminance selects shade 0 (black)
+through 15 (white), with the same rotations and error handling as the
+four-shade driver.
+
+After a full white reset, five masked passes each drive three non-white
+shades. The fourth waveform is a no-op for every other pixel, so each
+non-white pixel receives one blackening pulse, not a sum of pulses.
+Empty passes are skipped. This follows
+[`update_greyscale` in the reference driver](https://github.com/antirez/uc8151_micropython/blob/cc2a0de91386f08ee6c08e6e315bcfef850ffc49/uc8151.py).
+The existing `LICENSE-grayscale` also applies to this adaptation.
+
+`Grayscale16Config.Frames` contains 15 pulse durations from lightest non-white
+to black. An all-zero array selects these initial values at 100Hz:
+
+```text
+2 4 6 8 10 12 14 17 19 21 23 25 27 29 32
+```
+
+Custom durations must be positive and strictly increasing, ending at the
+fixed 32-frame black. These initial timings are linear in pulse duration,
+not calibrated for equal perceived brightness. Sixteen addressable shades
+does not establish sixteen visually distinct tones on a particular panel.
+Temperature sensitivity, ghosting and long-term behavior remain unvalidated.
+
+The [sixteen-shade tester](../examples/badger2040/grayscale16) shows sixteen
+**undithered solid swatches**, white to black, above a sixteen-shade Bayer
+gradient. A selects the next lighter swatch, B the next darker swatch.
+Up increases the selected shade's duration (darker); Down decreases it
+(lighter), without crossing adjacent durations. Black and white stay fixed.
+The marker identifies the selected swatch. `S` is its shade number and `F`
+its pulse frames. Serial output prints the complete timing table.
+
+Every redraw hard-resets the controller and runs the same white, black,
+white cleaning sequence as the four-shade tester, followed by the masked
+passes. Wait until the activity LED goes out before pressing again.
+Settings are not saved across restarts. This tester is slower than four
+shades and stays awake for input.
+
 ## Badger examples
 
 The examples use the board EPD pin constants, SPI0 mode 0 at 12MHz,
@@ -73,6 +115,7 @@ The examples use the board EPD pin constants, SPI0 mode 0 at 12MHz,
 ```sh
 tinygo build -target=badger2040 -o badger-gray.uf2 ./examples/badger2040/grayscale
 tinygo build -target=badger2040 -o badger-gradient.uf2 ./examples/badger2040/grayscale-gradient
+tinygo build -target=badger2040 -o badger-gray16.uf2 ./examples/badger2040/grayscale16
 tinygo build -target=badger2040 -o badger-tainigo.uf2 ./examples/badger2040/grayscale-image
 tinygo build -target=badger2040 -o badger-slideshow.uf2 ./examples/badger2040/grayscale-slideshow
 ```
