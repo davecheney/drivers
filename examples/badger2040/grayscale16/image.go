@@ -7,7 +7,7 @@ import (
 	"tinygo.org/x/drivers/internal/grayimage"
 )
 
-//go:embed assets/person-with-pipe.bin
+//go:embed assets/test-photo.bin
 var testImage []byte
 
 func showTester(display drivers.Displayer) error {

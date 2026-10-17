@@ -65,13 +65,19 @@ func TestPhotoWithoutOverlays(t *testing.T) {
 			t.Fatalf("image pixel %d was altered or covered: %v", i, c)
 		}
 		shades[value]++
-		if x := i % 296; (x < 41 || x >= 255) && value != 15 {
-			t.Fatal("aspect-ratio padding was not white")
-		}
 	}
 	for shade, count := range shades {
 		if count == 0 {
 			t.Fatalf("photo shade %d is missing", shade)
+		}
+	}
+	for _, x := range []int{0, 295} {
+		content := false
+		for y := 0; y < 128; y++ {
+			content = content || d.pixels[y*296+x].R != 255
+		}
+		if !content {
+			t.Fatalf("photo edge %d has a blank border", x)
 		}
 	}
 }
@@ -211,8 +217,11 @@ func TestRefreshTester(t *testing.T) {
 			}
 		}
 		frame := d.frames[attempt*2+1]
-		if frame[40*296+8].R != 255 || frame[40*296+287].R != 255 {
-			t.Fatal("photo padding was not restored after cleaning frame")
+		for i, pixel := range frame {
+			value := (testImage[4+i/2] >> uint(4-i%2*4)) & 15
+			if pixel.R != value*17 {
+				t.Fatalf("photo pixel %d was not restored after cleaning frame", i)
+			}
 		}
 	}
 	if d.frames[1] != d.frames[3] {

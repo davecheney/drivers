@@ -1,4 +1,4 @@
-"""Fit the supplied test photo to Badger's sixteen-shade packed image format."""
+"""Center-crop the test photo to Badger's sixteen-shade packed image format."""
 
 import argparse
 from pathlib import Path
@@ -20,14 +20,13 @@ def bayer_rank(x, y):
 
 def convert(source):
     with Image.open(source) as original:
-        image = ImageOps.contain(
+        image = ImageOps.fit(
             ImageOps.exif_transpose(original).convert("RGBA"),
             (WIDTH, HEIGHT),
             Image.Resampling.LANCZOS,
         )
-        left, top = (WIDTH - image.width) // 2, (HEIGHT - image.height) // 2
         canvas = Image.new("RGBA", (WIDTH, HEIGHT), "white")
-        canvas.alpha_composite(image, (left, top))
+        canvas.alpha_composite(image)
         canvas = canvas.convert("RGB")
 
     pixels = canvas.load()
@@ -47,8 +46,8 @@ def convert(source):
 def main():
     assets = Path(__file__).parent / "assets"
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", nargs="?", type=Path, default=assets / "person-with-pipe.png")
-    parser.add_argument("-o", "--output", type=Path, default=assets / "person-with-pipe.bin")
+    parser.add_argument("source", nargs="?", type=Path, default=assets / "test-photo.jpg")
+    parser.add_argument("-o", "--output", type=Path, default=assets / "test-photo.bin")
     args = parser.parse_args()
     data = convert(args.source)
     args.output.write_bytes(data)

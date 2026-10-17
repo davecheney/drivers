@@ -97,8 +97,9 @@ on a particular panel.
 Temperature sensitivity, ghosting and long-term behavior remain unvalidated.
 
 The [sixteen-shade tester](../examples/badger2040/grayscale16) shows the supplied
-[test photo](../examples/badger2040/grayscale16/assets), fitted without cropping
-and converted with sixteen-shade Bayer dithering. It starts at **S4/F11**.
+[test photo](../examples/badger2040/grayscale16/assets), center-cropped to
+296x128 without padding and converted with sixteen-shade Bayer dithering.
+It starts at **S4/F11**.
 There are no on-screen captions, values or selection markers, for blind tuning.
 
 A selects the next lighter shade number, B the next darker shade number.
