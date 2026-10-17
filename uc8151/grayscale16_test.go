@@ -39,7 +39,7 @@ func TestGrayscale16New(t *testing.T) {
 			t.Fatal("new framebuffer is not white")
 		}
 	}
-	want := [15]byte{2, 4, 6, 8, 10, 12, 14, 17, 19, 21, 23, 25, 27, 29, 32}
+	want := [15]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 17, 32}
 	if d.frames != want {
 		t.Fatalf("default frames = %v, want %v", d.frames, want)
 	}
@@ -60,7 +60,7 @@ func TestGrayscale16Configure(t *testing.T) {
 		cfg := Grayscale16Config{Rotation: drivers.Rotation270}
 		want := DefaultGrayscale16Frames()
 		if custom {
-			want[0], want[5] = 1, 11
+			want[12], want[13] = 15, 18
 			cfg.Frames = want
 		}
 		var stages []string

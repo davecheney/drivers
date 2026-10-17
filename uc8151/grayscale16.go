@@ -12,13 +12,9 @@ import (
 var ErrInvalidGrayscale16Frames = errors.New("uc8151: require 15 strictly increasing gray pulse lengths from 1 to 32, ending at 32")
 
 // DefaultGrayscale16Frames returns pulse lengths from lightest non-white to black.
-// These are experimental linear timings, not calibrated perceptual levels.
+// These are experimental timings, not calibrated perceptual levels.
 func DefaultGrayscale16Frames() [15]byte {
-	var frames [15]byte
-	for i := range frames {
-		frames[i] = byte(32 * (i + 1) / 15)
-	}
-	return frames
+	return [15]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 17, 32}
 }
 
 type Grayscale16Config struct {

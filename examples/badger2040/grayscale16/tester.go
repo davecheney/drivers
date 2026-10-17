@@ -18,7 +18,22 @@ type calibration struct {
 }
 
 func defaultCalibration() calibration {
-	return calibration{shade: 8, frames: uc8151.DefaultGrayscale16Frames()}
+	return calibration{shade: 2, frames: uc8151.DefaultGrayscale16Frames()}
+}
+
+func (c calibration) limits() (minimum, maximum byte) {
+	index := 14 - c.shade
+	minimum = 1
+	if index > 0 {
+		minimum = c.frames[index-1] + 1
+	}
+	return minimum, c.frames[index+1] - 1
+}
+
+func (c calibration) status() string {
+	minimum, maximum := c.limits()
+	return "S" + strconv.Itoa(int(c.shade)) + " F" + strconv.Itoa(int(c.frames[14-c.shade])) +
+		" [" + strconv.Itoa(int(minimum)) + "-" + strconv.Itoa(int(maximum)) + "] A</B> U/D"
 }
 
 func (c *calibration) adjust(pressed controls.Buttons) bool {
@@ -34,17 +49,14 @@ func (c *calibration) adjust(pressed controls.Buttons) bool {
 		}
 	}
 	index := 14 - c.shade
+	minimum, maximum := c.limits()
 	switch pressed & (controls.Up | controls.Down) {
 	case controls.Up:
-		if c.frames[index]+1 < c.frames[index+1] {
+		if c.frames[index] < maximum {
 			c.frames[index]++
 		}
 	case controls.Down:
-		previous := byte(0)
-		if index > 0 {
-			previous = c.frames[index-1]
-		}
-		if c.frames[index] > previous+1 {
+		if c.frames[index] > minimum {
 			c.frames[index]--
 		}
 	}
@@ -103,7 +115,6 @@ func showTester(display drivers.Displayer, cal calibration) error {
 			display.SetPixel(x, y, black)
 		}
 	}
-	status := "S" + strconv.Itoa(int(cal.shade)) + " F" + strconv.Itoa(int(cal.frames[14-cal.shade])) + " A</B> U+/D-"
-	tinyfont.WriteLine(display, &freemono.Regular9pt7b, left, h-6, status, black)
+	tinyfont.WriteLine(display, &freemono.Regular9pt7b, left, h-6, cal.status(), black)
 	return display.Display()
 }

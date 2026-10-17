@@ -46,7 +46,8 @@ func run() error {
 func updateDisplay(display testerController, cal calibration) error {
 	machine.LED.High()
 	defer machine.LED.Low()
-	println("Badger 4bpp: selected shade", cal.shade, "frames", cal.frames[14-cal.shade])
+	minimum, maximum := cal.limits()
+	println("Badger 4bpp: selected shade", cal.shade, "frames", cal.frames[14-cal.shade], "range", minimum, maximum)
 	print("pulse frames, light to dark:")
 	for _, duration := range cal.frames {
 		print(" ", duration)

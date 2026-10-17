@@ -84,13 +84,16 @@ The existing `LICENSE-grayscale` also applies to this adaptation.
 to black. An all-zero array selects these initial values at 100Hz:
 
 ```text
-2 4 6 8 10 12 14 17 19 21 23 25 27 29 32
+1 2 3 4 5 6 7 8 9 10 11 12 14 17 32
 ```
 
 Custom durations must be positive and strictly increasing, ending at the
-fixed 32-frame black. These initial timings are linear in pulse duration,
-not calibrated for equal perceived brightness. Sixteen addressable shades
-does not establish sixteen visually distinct tones on a particular panel.
+fixed 32-frame black. The initial linear ramp made dark tones turn black
+too quickly on the operator's panel. This lighter curve keeps all gray
+pulses within 1-17 frames and reserves 32 frames for full black. It retains
+distinct timings but is not calibrated for equal perceived brightness.
+Sixteen addressable shades do not guarantee sixteen visually distinct tones
+on a particular panel.
 Temperature sensitivity, ghosting and long-term behavior remain unvalidated.
 
 The [sixteen-shade tester](../examples/badger2040/grayscale16) shows sixteen
@@ -98,8 +101,12 @@ The [sixteen-shade tester](../examples/badger2040/grayscale16) shows sixteen
 gradient. A selects the next lighter swatch, B the next darker swatch.
 Up increases the selected shade's duration (darker); Down decreases it
 (lighter), without crossing adjacent durations. Black and white stay fixed.
-The marker identifies the selected swatch. `S` is its shade number and `F`
-its pulse frames. Serial output prints the complete timing table.
+The tester starts at shade 2, near black. The marker identifies the selected
+swatch. `S` is its shade number and `F` its pulse frames. The bracketed range
+shows the allowed duration between neighboring shades. A range such as
+`[7-7]` means there is no room to adjust that shade independently at 100Hz
+without repeating a neighboring duration. Serial output prints the complete
+timing table.
 
 Every redraw hard-resets the controller and runs the same white, black,
 white cleaning sequence as the four-shade tester, followed by the masked

@@ -121,12 +121,12 @@ func TestCalibrationButtons(t *testing.T) {
 		shade  byte
 		frame  byte
 	}{
-		{controls.A, 9, 12},
-		{controls.B, 7, 17},
-		{controls.Up, 8, 15},
-		{controls.Down, 8, 13},
-		{controls.A | controls.B, 8, 14},
-		{controls.Up | controls.Down, 8, 14},
+		{controls.A, 3, 12},
+		{controls.B, 1, 17},
+		{controls.Up, 2, 15},
+		{controls.Down, 2, 13},
+		{controls.A | controls.B, 2, 14},
+		{controls.Up | controls.Down, 2, 14},
 	} {
 		cal := defaultCalibration()
 		changed := cal.adjust(tc.button)
@@ -148,6 +148,10 @@ func TestCalibrationPulseBounds(t *testing.T) {
 			previous = base.frames[index-1]
 		}
 		next := base.frames[index+1]
+		base.shade = shade
+		if minimum, maximum := base.limits(); minimum != previous+1 || maximum != next-1 {
+			t.Fatalf("shade %d range = %d-%d, want %d-%d", shade, minimum, maximum, previous+1, next-1)
+		}
 		for duration := previous + 1; duration < next; duration++ {
 			for _, button := range []controls.Buttons{controls.Up, controls.Down} {
 				cal := base
@@ -183,6 +187,21 @@ func TestCalibrationPulseBounds(t *testing.T) {
 	}
 	if cal.shade != 1 {
 		t.Fatal("B should stop at the darkest non-black shade")
+	}
+}
+
+func TestCalibrationStatus(t *testing.T) {
+	cal := defaultCalibration()
+	if got := cal.status(); got != "S2 F14 [13-16] A</B> U/D" {
+		t.Fatalf("initial status = %q", got)
+	}
+	cal.shade = 8
+	before := cal
+	if cal.adjust(controls.Up) || cal.adjust(controls.Down) || cal != before {
+		t.Fatal("one-frame neighbor spacing should prevent an individual adjustment")
+	}
+	if got := cal.status(); got != "S8 F7 [7-7] A</B> U/D" {
+		t.Fatalf("locked shade status = %q", got)
 	}
 }
 
