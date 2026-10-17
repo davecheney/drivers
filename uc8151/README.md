@@ -84,6 +84,7 @@ It uses an 8x8 Bayer matrix to dither between adjacent shades of the four-shade
 palette and preserves solid endpoints. Up increases dark-gray pulse frames
 (darker), Down decreases them (lighter). A increases light-gray frames (darker),
 B decreases them (lighter). Each debounced press changes one frame at 100Hz.
+The front buttons use pull-down inputs and read HIGH when pressed.
 The screen and serial output show the current dark (`D`) and light (`L`) values.
 Adjustments retain `0 < light < dark < 32`; opposing buttons cancel.
 

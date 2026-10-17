@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"tinygo.org/x/drivers"
+	"tinygo.org/x/drivers/internal/pin"
 	"tinygo.org/x/drivers/uc8151"
 )
 
@@ -16,6 +17,18 @@ const (
 	buttonA
 	buttonB
 )
+
+type buttonPins [4]pin.Input
+
+func (pins buttonPins) read() buttons {
+	var pressed buttons
+	for i, pin := range pins {
+		if pin.Get() {
+			pressed |= 1 << uint(i)
+		}
+	}
+	return pressed
+}
 
 type calibration struct {
 	dark, light byte

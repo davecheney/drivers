@@ -16,15 +16,19 @@ func main() {
 }
 
 func run() error {
+	// Front buttons are active HIGH in Pimoroni's Badger2040::init().
+	// https://github.com/pimoroni/pimoroni-pico/blob/bbb1792/libraries/badger2040/badger2040.cpp
 	for _, pin := range []machine.Pin{machine.BUTTON_UP, machine.BUTTON_DOWN, machine.BUTTON_A, machine.BUTTON_B} {
-		pin.Configure(machine.PinConfig{Mode: machine.PinInputPullup})
+		pin.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
 	}
+	pins := buttonPins{machine.BUTTON_UP, machine.BUTTON_DOWN, machine.BUTTON_A, machine.BUTTON_B}
 	machine.LED.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	display, err := board.NewDisplay(nil)
 	if err != nil {
 		return err
 	}
 	println("Badger grayscale gradient: white to black, 8x8 Bayer, four shades")
+	println("Badger button mask (HIGH=pressed):", pins.read())
 	cal := defaultCalibration()
 	if err := updateDisplay(display, cal); err != nil {
 		return err
@@ -32,22 +36,12 @@ func run() error {
 	var debounce buttonDebouncer
 	for {
 		time.Sleep(10 * time.Millisecond)
-		if cal.adjust(debounce.update(readButtons(), time.Now())) {
+		if cal.adjust(debounce.update(pins.read(), time.Now())) {
 			if err := updateDisplay(display, cal); err != nil {
 				return err
 			}
 		}
 	}
-}
-
-func readButtons() buttons {
-	var pressed buttons
-	for i, pin := range [...]machine.Pin{machine.BUTTON_UP, machine.BUTTON_DOWN, machine.BUTTON_A, machine.BUTTON_B} {
-		if !pin.Get() {
-			pressed |= 1 << uint(i)
-		}
-	}
-	return pressed
 }
 
 func updateDisplay(display gradientController, cal calibration) error {

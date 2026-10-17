@@ -9,6 +9,24 @@ import (
 	"tinygo.org/x/drivers"
 )
 
+type buttonLevel bool
+
+func (level buttonLevel) Get() bool { return bool(level) }
+
+func TestActiveHighButtons(t *testing.T) {
+	for mask := buttons(0); mask < 16; mask++ {
+		pins := buttonPins{
+			buttonLevel(mask&buttonUp != 0),
+			buttonLevel(mask&buttonDown != 0),
+			buttonLevel(mask&buttonA != 0),
+			buttonLevel(mask&buttonB != 0),
+		}
+		if got := pins.read(); got != mask {
+			t.Fatalf("HIGH pin mask %04b gives buttons %04b", mask, got)
+		}
+	}
+}
+
 func TestCalibration(t *testing.T) {
 	if got := defaultCalibration(); got != (calibration{dark: 10, light: 4}) {
 		t.Fatalf("initial calibration = %v", got)
