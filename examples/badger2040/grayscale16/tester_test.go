@@ -66,10 +66,13 @@ func TestPhotoWithoutOverlays(t *testing.T) {
 		}
 		shades[value]++
 	}
-	for shade, count := range shades {
+	for shade, count := range shades[:15] {
 		if count == 0 {
 			t.Fatalf("photo shade %d is missing", shade)
 		}
+	}
+	if shades[15] != 0 {
+		t.Fatal("this crop should not contain added pure-white pixels")
 	}
 	for _, x := range []int{0, 295} {
 		content := false

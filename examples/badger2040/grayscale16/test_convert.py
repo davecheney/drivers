@@ -43,14 +43,14 @@ class ConversionTests(unittest.TestCase):
 
     def test_photo_regeneration_and_full_bleed(self):
         assets = Path(__file__).parent / "assets"
-        data = convert(assets / "test-photo.jpg")
+        data = convert(assets / "test-photo.png")
         self.assertEqual(data, (assets / "test-photo.bin").read_bytes())
         used = set()
         for y in range(HEIGHT):
             for x in range(WIDTH):
                 value = shade(data, x, y)
                 used.add(value)
-        self.assertEqual(used, set(range(16)))
+        self.assertEqual(used, set(range(15)))
         for x in (0, WIDTH - 1):
             self.assertTrue(any(shade(data, x, y) != 15 for y in range(HEIGHT)))
 

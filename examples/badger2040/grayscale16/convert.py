@@ -46,7 +46,7 @@ def convert(source):
 def main():
     assets = Path(__file__).parent / "assets"
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", nargs="?", type=Path, default=assets / "test-photo.jpg")
+    parser.add_argument("source", nargs="?", type=Path, default=assets / "test-photo.png")
     parser.add_argument("-o", "--output", type=Path, default=assets / "test-photo.bin")
     args = parser.parse_args()
     data = convert(args.source)
