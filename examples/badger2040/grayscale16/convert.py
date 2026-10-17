@@ -2,20 +2,16 @@
 
 import argparse
 from pathlib import Path
+import runpy
 import struct
 
 from PIL import Image, ImageOps
 
 
 WIDTH, HEIGHT = 296, 128
-
-
-def bayer_rank(x, y):
-    tile = ((0, 3), (2, 1))
-    rank = 0
-    for bit in range(3):
-        rank = rank * 4 + tile[(y >> bit) & 1][(x >> bit) & 1]
-    return rank
+quantize = runpy.run_path(
+    str(Path(__file__).resolve().parents[1] / "internal/dither/floyd_steinberg.py")
+)["quantize"]
 
 
 def convert(source):
@@ -30,17 +26,13 @@ def convert(source):
         canvas = canvas.convert("RGB")
 
     pixels = canvas.load()
-    packed = bytearray(WIDTH * HEIGHT // 2)
-    for y in range(HEIGHT):
-        for x in range(WIDTH):
-            r, g, b = pixels[x, y]
-            gray = (77 * r + 150 * g + 29 * b) >> 8
-            level = gray // 17
-            if gray % 17 * 128 > (2 * bayer_rank(x, y) + 1) * 17:
-                level += 1
-            index = y * WIDTH + x
-            packed[index // 2] |= level << (4 - (index % 2) * 4)
-    return struct.pack("<HH", WIDTH, HEIGHT) + packed
+    values = [
+        (77 * r + 150 * g + 29 * b) >> 8
+        for y in range(HEIGHT)
+        for x in range(WIDTH)
+        for r, g, b in (pixels[x, y],)
+    ]
+    return struct.pack("<HH", WIDTH, HEIGHT) + quantize(values, WIDTH, HEIGHT, 4)
 
 
 def main():

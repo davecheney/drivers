@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from convert import HEIGHT, WIDTH, bayer_rank, convert
+from convert import HEIGHT, WIDTH, convert, quantize
 
 
 def shade(data, x, y):
@@ -20,9 +20,36 @@ class ConversionTests(unittest.TestCase):
             image.save(source)
             return convert(source)
 
-    def test_bayer_ranks(self):
-        self.assertEqual({bayer_rank(x, y) for y in range(8) for x in range(8)}, set(range(64)))
-        self.assertEqual([bayer_rank(x, 0) for x in range(8)], [0, 48, 12, 60, 3, 51, 15, 63])
+    def test_error_diffusion(self):
+        self.assertEqual(quantize([8] * 8, 4, 2, 4), bytes([0x01, 0x01, 0x10, 0x10]))
+        self.assertEqual(
+            quantize([0, 8, 16, 24, 32, 40, 48, 56], 4, 2, 4),
+            bytes([0x00, 0x11, 0x23, 0x33]),
+        )
+
+    def test_palette_and_odd_packing(self):
+        self.assertEqual(quantize([i * 17 for i in range(16)], 16, 1, 4), bytes.fromhex("0123456789abcdef"))
+        self.assertEqual(quantize([0, 85, 170, 255], 4, 1, 2), bytes([0x1B]))
+        self.assertEqual(quantize([255], 1, 1, 4), bytes([0xF0]))
+        self.assertEqual(quantize([255], 1, 1, 2), bytes([0xC0]))
+
+    def test_diffusion_stays_in_bounds(self):
+        values = [255] * 9
+        values[4] = 8
+        original = values.copy()
+        quantize(values, 3, 3, 4, (1, 1, 2, 2))
+        self.assertEqual(values, original)
+
+    def test_invalid_quantizer_input(self):
+        for values, width, height, bits, bounds in (
+            ([], 0, 1, 4, None),
+            ([], 1, 1, 4, None),
+            ([0], 1, 1, 3, None),
+            ([0], 1, 1, 4, (-1, 0, 1, 1)),
+            ([0], 1, 1, 4, (0, 0, 2, 1)),
+        ):
+            with self.assertRaises(ValueError):
+                quantize(values, width, height, bits, bounds)
 
     def test_dimensions_and_full_bleed_black(self):
         data = self.converted(Image.new("RGB", (100, 100), "black"))

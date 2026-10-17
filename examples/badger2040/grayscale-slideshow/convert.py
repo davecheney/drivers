@@ -2,6 +2,7 @@
 
 import argparse
 from pathlib import Path
+import runpy
 import struct
 
 from PIL import Image, ImageOps
@@ -14,6 +15,9 @@ ASSETS = (
     ("02-cccp-stamp.bin", 1.0),
     ("03-kanagawa.bin", 1.0),
 )
+quantize = runpy.run_path(
+    str(Path(__file__).resolve().parents[1] / "internal/dither/floyd_steinberg.py")
+)["quantize"]
 
 
 def convert(source, contrast):
@@ -35,18 +39,7 @@ def convert(source, contrast):
         for x in range(WIDTH)
         for r, g, b in (pixels[x, y],)
     ]
-    packed = bytearray(WIDTH * HEIGHT // 4)
-    for y in range(HEIGHT):
-        for x in range(WIDTH):
-            index = y * WIDTH + x
-            value = max(0, min(255, values[index]))
-            shade = min(3, int(value / 85 + 0.5))
-            packed[index // 4] |= shade << (6 - (index % 4) * 2)
-            error = value - shade * 85
-            for dx, dy, weight in ((1, 0, 7), (-1, 1, 3), (0, 1, 5), (1, 1, 1)):
-                nx, ny = x + dx, y + dy
-                if left <= nx < left + width and top <= ny < top + height:
-                    values[ny * WIDTH + nx] += error * weight / 16
+    packed = quantize(values, WIDTH, HEIGHT, 2, (left, top, left + width, top + height))
     return struct.pack("<HH", WIDTH, HEIGHT) + packed
 
 

@@ -5,8 +5,10 @@ to 296x128 without stretching or adding borders. Source orientation is
 preserved after applying any EXIF orientation. Transparency is composited
 onto white.
 
-Conversion uses luminance weights 77/150/29 and an 8x8 Bayer pattern for
-sixteen shades, without a contrast boost. Solid black and white stay solid.
+Conversion uses luminance weights 77/150/29 and Floyd-Steinberg error diffusion
+into sixteen fixed shades, without a contrast boost. Quantization error is
+carried right and down with weights 7/16, 3/16, 5/16 and 1/16.
+Solid black and white stay solid.
 This crop uses shades 0-14; no pure-white padding is added.
 
 `test-photo.bin` has a four-byte little-endian uint16 width/height
