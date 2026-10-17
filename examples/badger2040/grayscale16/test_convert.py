@@ -14,14 +14,15 @@ def shade(data, x, y):
 
 
 class ConversionTests(unittest.TestCase):
-    def converted(self, image):
+    def converted(self, image, bits=4):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "test.png"
             image.save(source)
-            return convert(source)
+            return convert(source, bits)
 
     def test_error_diffusion(self):
         self.assertEqual(quantize([8] * 8, 4, 2, 4), bytes([0x01, 0x01, 0x10, 0x10]))
+        self.assertEqual(quantize([42] * 8, 4, 2, 2), bytes([0x11, 0x44]))
         self.assertEqual(
             quantize([0, 8, 16, 24, 32, 40, 48, 56], 4, 2, 4),
             bytes([0x00, 0x11, 0x23, 0x33]),
@@ -67,6 +68,30 @@ class ConversionTests(unittest.TestCase):
     def test_transparency_is_white(self):
         data = self.converted(Image.new("RGBA", (100, 100), (0, 0, 0, 0)))
         self.assertEqual(data[4:], bytes([255]) * 18944)
+
+    def test_four_shade_conversion(self):
+        for color, packed in (("black", 0), ("white", 255), ((85, 85, 85), 0x55)):
+            data = self.converted(Image.new("RGB", (400, 400), color), 2)
+            self.assertEqual(len(data), 9476)
+            self.assertEqual(struct.unpack("<HH", data[:4]), (296, 128))
+            self.assertEqual(data[4:], bytes([packed]) * 9472)
+
+    def test_four_shade_crop_and_transparency(self):
+        image = Image.new("RGB", (400, 400), (85, 85, 85))
+        image.paste("black", (0, 0, 400, 80))
+        image.paste("black", (0, 320, 400, 400))
+        self.assertEqual(self.converted(image, 2)[4:], bytes([0x55]) * 9472)
+        transparent = Image.new("RGBA", (100, 100), (0, 0, 0, 0))
+        self.assertEqual(self.converted(transparent, 2)[4:], bytes([255]) * 9472)
+
+    def test_four_shade_photo_regeneration(self):
+        assets = Path(__file__).parent / "assets"
+        data = convert(assets / "test-photo.png", 2)
+        packed = assets.parents[1] / "grayscale-photo/assets/test-photo.bin"
+        self.assertEqual(data, packed.read_bytes())
+        self.assertEqual(len(data), 9476)
+        used = {(value >> shift) & 3 for value in data[4:] for shift in (6, 4, 2, 0)}
+        self.assertEqual(used, {0, 1, 2, 3})
 
     def test_photo_regeneration_and_full_bleed(self):
         assets = Path(__file__).parent / "assets"

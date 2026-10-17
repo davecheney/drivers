@@ -37,26 +37,7 @@ func (c calibration) config() uc8151.GrayscaleConfig {
 
 func (c *calibration) adjust(pressed buttons) bool {
 	before := *c
-	switch pressed & (buttonUp | buttonDown) {
-	case buttonUp:
-		if c.dark < 31 {
-			c.dark++
-		}
-	case buttonDown:
-		if c.dark > c.light+1 {
-			c.dark--
-		}
-	}
-	switch pressed & (buttonA | buttonB) {
-	case buttonA:
-		if c.light+1 < c.dark {
-			c.light++
-		}
-	case buttonB:
-		if c.light > 1 {
-			c.light--
-		}
-	}
+	c.dark, c.light = controls.AdjustGrayFrames(c.dark, c.light, pressed)
 	return *c != before
 }
 

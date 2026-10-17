@@ -127,6 +127,7 @@ The examples use the board EPD pin constants, SPI0 mode 0 at 12MHz,
 ```sh
 tinygo build -target=badger2040 -o badger-gray.uf2 ./examples/badger2040/grayscale
 tinygo build -target=badger2040 -o badger-gradient.uf2 ./examples/badger2040/grayscale-gradient
+tinygo build -target=badger2040 -o badger-photo.uf2 ./examples/badger2040/grayscale-photo
 tinygo build -target=badger2040 -o badger-gray16.uf2 ./examples/badger2040/grayscale16
 tinygo build -target=badger2040 -o badger-tainigo.uf2 ./examples/badger2040/grayscale-image
 tinygo build -target=badger2040 -o badger-slideshow.uf2 ./examples/badger2040/grayscale-slideshow
@@ -150,6 +151,17 @@ reset, giving a white, black, white, gradient sequence to clear the previous ima
 Wait for the activity LED to turn off before the next press. Holding a button
 does not repeat. The example stays awake for input. Values reset to 9/5 after
 a restart and are not saved to flash.
+
+The [four-shade photo tester](../examples/badger2040/grayscale-photo)
+shows the same cropped Tommy gun photo as the sixteen-shade tester, using
+2bpp Floyd-Steinberg error diffusion. It starts at L5/D9 and keeps the gradient's
+Up/Down dark-gray and A/B light-gray controls, debounce, activity LED and full
+cleaning sequence. There are no on-screen captions or markers. Serial output
+reports the timings. The two gray timings adjust independently within
+`0 < light < dark < 32`, without shifting neighbors. Each image uses one
+grayscale pass rather than the sixteen-shade mode's five masked passes.
+The [asset instructions](../examples/badger2040/grayscale-photo/assets)
+use the same source photo and converter with `--bits 2`.
 
 The [single-image test](../examples/badger2040/grayscale-image)
 shows the supplied Tainigo sticker once, then enters deep sleep without

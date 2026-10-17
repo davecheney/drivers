@@ -1,4 +1,4 @@
-"""Center-crop the test photo to Badger's sixteen-shade packed image format."""
+"""Center-crop the test photo to Badger's packed 2bpp or 4bpp image format."""
 
 import argparse
 from pathlib import Path
@@ -14,7 +14,7 @@ quantize = runpy.run_path(
 )["quantize"]
 
 
-def convert(source):
+def convert(source, bits=4):
     with Image.open(source) as original:
         image = ImageOps.fit(
             ImageOps.exif_transpose(original).convert("RGBA"),
@@ -32,7 +32,7 @@ def convert(source):
         for x in range(WIDTH)
         for r, g, b in (pixels[x, y],)
     ]
-    return struct.pack("<HH", WIDTH, HEIGHT) + quantize(values, WIDTH, HEIGHT, 4)
+    return struct.pack("<HH", WIDTH, HEIGHT) + quantize(values, WIDTH, HEIGHT, bits)
 
 
 def main():
@@ -40,8 +40,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", nargs="?", type=Path, default=assets / "test-photo.png")
     parser.add_argument("-o", "--output", type=Path, default=assets / "test-photo.bin")
+    parser.add_argument("--bits", type=int, choices=(2, 4), default=4)
     args = parser.parse_args()
-    data = convert(args.source)
+    if args.bits == 2 and args.output == assets / "test-photo.bin":
+        parser.error("--bits 2 requires --output to avoid overwriting the 4bpp asset")
+    data = convert(args.source, args.bits)
     args.output.write_bytes(data)
     print(f"{args.output.name}: {len(data)} bytes")
 
