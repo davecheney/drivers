@@ -71,13 +71,18 @@ The examples use the board EPD pin constants, SPI0 mode 0 at 12MHz,
 
 ```sh
 tinygo build -target=badger2040 -o badger-gray.uf2 ./examples/badger2040/grayscale
+tinygo build -target=badger2040 -o badger-gradient.uf2 ./examples/badger2040/grayscale-gradient
 tinygo build -target=badger2040 -o badger-tainigo.uf2 ./examples/badger2040/grayscale-image
 tinygo build -target=badger2040 -o badger-slideshow.uf2 ./examples/badger2040/grayscale-slideshow
 ```
 
 The diagnostic prints each initialization stage and pauses for five seconds.
 It clears to white, shows four bordered swatches with an orientation marker,
-then enters deep sleep. The [single-image test](../examples/badger2040/grayscale-image)
+then enters deep sleep. The [gradient test](../examples/badger2040/grayscale-gradient)
+draws a 280x64 horizontal bar from white on the left to black on the right.
+It uses an 8x8 Bayer matrix to dither between adjacent shades of the four-shade
+palette, preserves solid endpoints, and enters deep sleep after one refresh.
+The [single-image test](../examples/badger2040/grayscale-image)
 shows the supplied Tainigo sticker once, then enters deep sleep without
 stage pauses. The optional slideshow displays the four supplied photographs
 with ten seconds between completed refreshes. Every frame includes a white reset.

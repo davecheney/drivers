@@ -134,6 +134,7 @@ tinygo build -size short -o ./build/test.uf2 -target=pico ./examples/ssd1289/mai
 tinygo build -size short -o ./build/test.hex -target=pico ./examples/irremote/main.go
 tinygo build -size short -o ./build/test.hex -target=badger2040 ./examples/uc8151/main.go
 tinygo build -size short -o ./build/test.uf2 -target=badger2040 ./examples/badger2040/grayscale
+tinygo build -size short -o ./build/test.uf2 -target=badger2040 ./examples/badger2040/grayscale-gradient
 tinygo build -size short -o ./build/test.uf2 -target=badger2040 ./examples/badger2040/grayscale-image
 tinygo build -size short -o ./build/test.uf2 -target=badger2040 ./examples/badger2040/grayscale-slideshow
 tinygo build -size short -o ./build/test.hex -target=badger2040 ./examples/waveshare-epd/epd2in9v2/main.go
