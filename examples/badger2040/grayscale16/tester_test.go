@@ -1,19 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"image/color"
 	"testing"
 
 	"tinygo.org/x/drivers"
 	"tinygo.org/x/drivers/examples/badger2040/internal/controls"
-	"tinygo.org/x/drivers/examples/badger2040/internal/dither"
 	"tinygo.org/x/drivers/uc8151"
 )
 
 type testerDisplay struct {
 	t           *testing.T
 	pixels      [296 * 128]color.RGBA
+	writes      int
 	frames      [][296 * 128]color.RGBA
 	configs     []uc8151.Grayscale16Config
 	configErr   error
@@ -29,6 +30,7 @@ func (d *testerDisplay) SetPixel(x, y int16, c color.RGBA) {
 		d.t.Fatalf("pixel outside Badger display: %d,%d", x, y)
 	}
 	d.pixels[int(y)*296+int(x)] = c
+	d.writes++
 }
 
 func (d *testerDisplay) Display() error {
@@ -44,96 +46,60 @@ func (d *testerDisplay) Configure(cfg uc8151.Grayscale16Config) error {
 	return d.configErr
 }
 
-func TestSixteenShadeTester(t *testing.T) {
+func TestPhotoWithoutOverlays(t *testing.T) {
+	if len(testImage) != 18948 || !bytes.Equal(testImage[:4], []byte{0x28, 0x01, 0x80, 0x00}) {
+		t.Fatal("expected a 296x128 packed 4bpp image")
+	}
 	d := &testerDisplay{t: t}
-	if err := showTester(d, defaultCalibration()); err != nil {
+	if err := showTester(d); err != nil {
 		t.Fatal(err)
 	}
-	if len(d.frames) != 1 {
-		t.Fatal("expected one image refresh")
-	}
-	for i, c := range d.pixels {
-		if c.R != c.G || c.R != c.B || c.R%17 != 0 || c.A != 255 {
-			t.Fatalf("invalid 4bpp color at pixel %d: %v", i, c)
-		}
-	}
-	for index := 0; index < 16; index++ {
-		left, right := 8+index*280/16, 8+(index+1)*280/16
-		want := uint8(15-index) * 17
-		for y := 28; y < 64; y++ {
-			for x := left; x < right; x++ {
-				if got := d.pixels[y*296+x].R; got != want {
-					t.Fatalf("solid swatch %d at %d,%d = %d, want %d", index, x, y, got, want)
-				}
-			}
-		}
+	if len(d.frames) != 1 || d.writes != 296*128 {
+		t.Fatal("expected one complete image with no overlay writes")
 	}
 	var shades [16]int
-	for y := 78; y < 102; y++ {
-		for x := 8; x < 288; x++ {
-			gray := uint8(((287-x)*255 + 139) / 279)
-			want := dither.Sixteen(gray, int16(x-8), int16(y-78))
-			got := d.pixels[y*296+x].R
-			if got != want {
-				t.Fatalf("Bayer gradient at %d,%d = %d, want %d", x, y, got, want)
-			}
-			shades[got/17]++
+	for i, c := range d.pixels {
+		value := (testImage[4+i/2] >> uint(4-i%2*4)) & 15
+		gray := value * 17
+		if c != (color.RGBA{gray, gray, gray, 255}) {
+			t.Fatalf("image pixel %d was altered or covered: %v", i, c)
 		}
-		if d.pixels[y*296+8].R != 255 || d.pixels[y*296+287].R != 0 {
-			t.Fatal("gradient endpoints are not solid white and black")
+		shades[value]++
+		if x := i % 296; (x < 41 || x >= 255) && value != 15 {
+			t.Fatal("aspect-ratio padding was not white")
 		}
 	}
 	for shade, count := range shades {
 		if count == 0 {
-			t.Fatalf("gradient shade %d is missing", shade)
-		}
-	}
-}
-
-func TestSelectedShadeMarker(t *testing.T) {
-	for shade := byte(1); shade < 15; shade++ {
-		cal := defaultCalibration()
-		cal.shade = shade
-		d := &testerDisplay{t: t}
-		if err := showTester(d, cal); err != nil {
-			t.Fatal(err)
-		}
-		index := 15 - int(shade)
-		left, right := 8+index*280/16, 8+(index+1)*280/16
-		var marked int
-		for x := 0; x < 296; x++ {
-			if d.pixels[68*296+x].R == 0 {
-				if x < left || x >= right {
-					t.Fatalf("shade %d marker is outside its swatch", shade)
-				}
-				marked++
-			}
-		}
-		if marked != 7 {
-			t.Fatalf("shade %d marker width = %d, want 7", shade, marked)
+			t.Fatalf("photo shade %d is missing", shade)
 		}
 	}
 }
 
 func TestCalibrationButtons(t *testing.T) {
+	initial := defaultCalibration()
+	if initial.shade != 4 || initial.frames[10] != 11 {
+		t.Fatal("expected initial S4/F11 calibration")
+	}
 	for _, tc := range []struct {
-		button controls.Buttons
-		shade  byte
-		frame  byte
+		button  controls.Buttons
+		shade   byte
+		frame   byte
+		changed bool
 	}{
-		{controls.A, 3, 12},
-		{controls.B, 1, 17},
-		{controls.Up, 2, 15},
-		{controls.Down, 2, 13},
-		{controls.A | controls.B, 2, 14},
-		{controls.Up | controls.Down, 2, 14},
+		{controls.A, 5, 10, true},
+		{controls.B, 3, 12, true},
+		{controls.Up, 4, 12, true},
+		{controls.Down, 4, 11, false},
+		{controls.A | controls.B, 4, 11, false},
+		{controls.Up | controls.Down, 4, 11, false},
 	} {
 		cal := defaultCalibration()
 		changed := cal.adjust(tc.button)
 		if cal.shade != tc.shade || cal.frames[14-cal.shade] != tc.frame {
 			t.Fatalf("button %d: shade %d frames %d", tc.button, cal.shade, cal.frames[14-cal.shade])
 		}
-		if changed != (tc.button != controls.A|controls.B && tc.button != controls.Up|controls.Down) {
+		if changed != tc.changed {
 			t.Fatalf("button %d: changed = %v", tc.button, changed)
 		}
 	}
@@ -141,36 +107,39 @@ func TestCalibrationButtons(t *testing.T) {
 
 func TestCalibrationPulseBounds(t *testing.T) {
 	for shade := byte(1); shade < 15; shade++ {
-		index := 14 - shade
-		base := defaultCalibration()
-		previous := byte(0)
-		if index > 0 {
-			previous = base.frames[index-1]
-		}
-		next := base.frames[index+1]
-		base.shade = shade
-		if minimum, maximum := base.limits(); minimum != previous+1 || maximum != next-1 {
-			t.Fatalf("shade %d range = %d-%d, want %d-%d", shade, minimum, maximum, previous+1, next-1)
-		}
-		for duration := previous + 1; duration < next; duration++ {
+		index := 14 - int(shade)
+		minimum, maximum := 15-shade, 32-shade
+		for duration := minimum; duration <= maximum; duration++ {
 			for _, button := range []controls.Buttons{controls.Up, controls.Down} {
-				cal := base
-				cal.shade, cal.frames[index] = shade, duration
-				before := cal
+				cal := calibration{shade: shade}
+				for i := 0; i < index; i++ {
+					cal.frames[i] = byte(i + 1)
+				}
+				for i := index; i < 14; i++ {
+					cal.frames[i] = duration + byte(i-index)
+				}
+				cal.frames[14] = 32
+				if low, high := cal.limits(); low != minimum || high != maximum {
+					t.Fatalf("shade %d bounds = %d-%d", shade, low, high)
+				}
 				changed := cal.adjust(button)
 				want := duration
-				if button == controls.Up && duration+1 < next {
+				if button == controls.Up && duration < maximum {
 					want++
 				}
-				if button == controls.Down && duration > previous+1 {
+				if button == controls.Down && duration > minimum {
 					want--
 				}
 				if cal.frames[index] != want || changed != (want != duration) {
 					t.Fatalf("shade %d duration %d button %d: frames %d, changed %v", shade, duration, button, cal.frames[index], changed)
 				}
-				before.frames[index] = want
-				if cal != before {
-					t.Fatal("pulse adjustment changed another shade")
+				for i, value := range cal.frames {
+					if value == 0 || i > 0 && value <= cal.frames[i-1] {
+						t.Fatal("neighbor propagation lost distinct, ordered timings")
+					}
+				}
+				if cal.frames[14] != 32 || cal.shade != shade {
+					t.Fatal("pulse adjustment changed full black or the selection")
 				}
 			}
 		}
@@ -190,18 +159,32 @@ func TestCalibrationPulseBounds(t *testing.T) {
 	}
 }
 
-func TestCalibrationStatus(t *testing.T) {
+func TestCalibrationNeighborPropagation(t *testing.T) {
 	cal := defaultCalibration()
-	if got := cal.status(); got != "S2 F14 [13-16] A</B> U/D" {
-		t.Fatalf("initial status = %q", got)
+	if !cal.adjust(controls.Up) {
+		t.Fatal("S4/F11 should be able to darken by shifting its neighbor")
 	}
-	cal.shade = 8
-	before := cal
-	if cal.adjust(controls.Up) || cal.adjust(controls.Down) || cal != before {
-		t.Fatal("one-frame neighbor spacing should prevent an individual adjustment")
+	want := [15]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 17, 32}
+	if cal.frames != want {
+		t.Fatalf("darkening propagation = %v, want %v", cal.frames, want)
 	}
-	if got := cal.status(); got != "S8 F7 [7-7] A</B> U/D" {
-		t.Fatalf("locked shade status = %q", got)
+	for i := 0; i < 14; i++ {
+		cal.frames[i] = byte(i + 3)
+	}
+	if !cal.adjust(controls.Down) {
+		t.Fatal("expected lightening with propagation")
+	}
+	for i, value := range cal.frames {
+		want := byte(i + 3)
+		if i <= 10 {
+			want--
+		}
+		if i == 14 {
+			want = 32
+		}
+		if value != want {
+			t.Fatalf("lightening propagation at %d = %d, want %d", i, value, want)
+		}
 	}
 }
 
@@ -209,7 +192,9 @@ func TestRefreshTester(t *testing.T) {
 	d := &testerDisplay{t: t}
 	cal := defaultCalibration()
 	for attempt := 0; attempt < 2; attempt++ {
-		cal.adjust(controls.A)
+		if attempt > 0 {
+			cal.adjust(controls.Up)
+		}
 		if err := refreshTester(d, cal); err != nil {
 			t.Fatal(err)
 		}
@@ -226,12 +211,15 @@ func TestRefreshTester(t *testing.T) {
 			}
 		}
 		frame := d.frames[attempt*2+1]
-		if frame[40*296+8].R != 255 || frame[40*296+287].R != 0 {
-			t.Fatal("missing swatches after cleaning frame")
+		if frame[40*296+8].R != 255 || frame[40*296+287].R != 255 {
+			t.Fatal("photo padding was not restored after cleaning frame")
 		}
 	}
-	if d.frames[1] == d.frames[3] {
-		t.Fatal("selection marker or status did not change")
+	if d.frames[1] != d.frames[3] {
+		t.Fatal("blind calibration should not add text or markers to the photo")
+	}
+	if d.configs[0].Frames == d.configs[1].Frames {
+		t.Fatal("physical tone adjustment was not applied to the controller")
 	}
 }
 

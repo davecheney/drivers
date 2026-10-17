@@ -1,4 +1,4 @@
-// Package grayimage loads packed four-shade images for e-paper examples.
+// Package grayimage loads packed grayscale images for e-paper examples.
 package grayimage
 
 import (
@@ -35,6 +35,15 @@ func Names(assets fs.FS) ([]string, error) {
 // Display validates an image before drawing or refreshing the display.
 // The header is little-endian uint16 width/height, followed by MSB-first 2bpp.
 func Display(display drivers.Displayer, data []byte) error {
+	return displayPacked(display, data, 2)
+}
+
+// Display16 validates and displays an MSB-first 4bpp image with the same header.
+func Display16(display drivers.Displayer, data []byte) error {
+	return displayPacked(display, data, 4)
+}
+
+func displayPacked(display drivers.Displayer, data []byte, bits uint) error {
 	if len(data) < 4 {
 		return ErrHeader
 	}
@@ -45,14 +54,17 @@ func Display(display drivers.Displayer, data []byte) error {
 		return ErrDimensions
 	}
 	pixels := data[4:]
-	if len(pixels) != (w*h+3)/4 {
+	perByte := 8 / int(bits)
+	if len(pixels) != (w*h+perByte-1)/perByte {
 		return ErrLength
 	}
+	mask := byte(1<<bits) - 1
+	scale := byte(255) / mask
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			index := y*w + x
-			shift := uint(6 - (index%4)*2)
-			gray := ((pixels[index/4] >> shift) & 3) * 85
+			shift := uint(perByte-1-index%perByte) * bits
+			gray := ((pixels[index/perByte] >> shift) & mask) * scale
 			display.SetPixel(int16(x), int16(y), color.RGBA{gray, gray, gray, 255})
 		}
 	}

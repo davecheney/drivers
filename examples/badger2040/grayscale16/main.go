@@ -26,7 +26,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	println("Badger 4bpp: sixteen shades, five masked passes")
+	println("Badger 4bpp: photo, blind calibration, five masked passes")
 	println("Badger button mask (HIGH=pressed):", pins.Read())
 	cal := defaultCalibration()
 	if err := updateDisplay(display, cal); err != nil {
@@ -35,10 +35,17 @@ func run() error {
 	var debounce controls.Debouncer
 	for {
 		time.Sleep(10 * time.Millisecond)
-		if cal.adjust(debounce.Update(pins.Read(), time.Now())) {
+		pressed := debounce.Update(pins.Read(), time.Now())
+		if pressed == 0 {
+			continue
+		}
+		if cal.adjust(pressed) {
 			if err := updateDisplay(display, cal); err != nil {
 				return err
 			}
+		} else {
+			minimum, maximum := cal.limits()
+			println("Badger 4bpp: unchanged, shade", cal.shade, "frames", cal.frames[14-cal.shade], "range", minimum, maximum)
 		}
 	}
 }

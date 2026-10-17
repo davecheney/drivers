@@ -96,17 +96,20 @@ Sixteen addressable shades do not guarantee sixteen visually distinct tones
 on a particular panel.
 Temperature sensitivity, ghosting and long-term behavior remain unvalidated.
 
-The [sixteen-shade tester](../examples/badger2040/grayscale16) shows sixteen
-**undithered solid swatches**, white to black, above a sixteen-shade Bayer
-gradient. A selects the next lighter swatch, B the next darker swatch.
-Up increases the selected shade's duration (darker); Down decreases it
-(lighter), without crossing adjacent durations. Black and white stay fixed.
-The tester starts at shade 2, near black. The marker identifies the selected
-swatch. `S` is its shade number and `F` its pulse frames. The bracketed range
-shows the allowed duration between neighboring shades. A range such as
-`[7-7]` means there is no room to adjust that shade independently at 100Hz
-without repeating a neighboring duration. Serial output prints the complete
-timing table.
+The [sixteen-shade tester](../examples/badger2040/grayscale16) shows the supplied
+[test photo](../examples/badger2040/grayscale16/assets), fitted without cropping
+and converted with sixteen-shade Bayer dithering. It starts at **S4/F11**.
+There are no on-screen captions, values or selection markers, for blind tuning.
+
+A selects the next lighter shade number, B the next darker shade number.
+Up increases the selected shade's duration (darker); Down decreases it (lighter).
+If an adjustment reaches a neighbor, that neighbor is shifted by one frame,
+continuing through any touching neighbors. All sixteen timings remain distinct
+and ordered; black stays at 32 frames and white stays at zero.
+The selected shade still has absolute bounds imposed by the available frames.
+For example, S4 cannot go below F11 while keeping ten lighter non-white timings
+positive and distinct. Serial output reports the selection, bounds and full
+timing table; no control text is drawn over the photo.
 
 Every redraw hard-resets the controller and runs the same white, black,
 white cleaning sequence as the four-shade tester, followed by the masked
