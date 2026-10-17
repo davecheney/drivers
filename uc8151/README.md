@@ -53,7 +53,7 @@ Badger. The defaults above shorten them to 10/4 frames. Use `DarkGrayFrames`
 and `LightGrayFrames` in `GrayscaleConfig` to tune another panel. Zero selects
 the default. The light duration must be less than dark, and dark must be
 less than the fixed 32-frame black duration. White receives no black pulse.
-The shorter defaults are a calibration candidate pending visual confirmation.
+The operator accepted the 10/4-frame calibration on their Badger 2040.
 
 **This mode uses experimental custom waveforms, not vendor-supported
 temperature-compensated grayscale.** The timings were developed for room
