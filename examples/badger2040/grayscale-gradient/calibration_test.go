@@ -28,7 +28,7 @@ func TestActiveHighButtons(t *testing.T) {
 }
 
 func TestCalibration(t *testing.T) {
-	if got := defaultCalibration(); got != (calibration{dark: 10, light: 4}) {
+	if got := defaultCalibration(); got != (calibration{dark: 9, light: 5}) {
 		t.Fatalf("initial calibration = %v", got)
 	}
 	for dark := byte(2); dark < 32; dark++ {
@@ -72,12 +72,12 @@ func TestCalibrationSimultaneousButtons(t *testing.T) {
 		pressed buttons
 		want    calibration
 	}{
-		{0, calibration{10, 4}},
-		{buttonUp | buttonDown, calibration{10, 4}},
-		{buttonA | buttonB, calibration{10, 4}},
-		{buttonUp | buttonA, calibration{11, 5}},
-		{buttonDown | buttonB, calibration{9, 3}},
-		{buttonUp | buttonDown | buttonA | buttonB, calibration{10, 4}},
+		{0, calibration{9, 5}},
+		{buttonUp | buttonDown, calibration{9, 5}},
+		{buttonA | buttonB, calibration{9, 5}},
+		{buttonUp | buttonA, calibration{10, 6}},
+		{buttonDown | buttonB, calibration{8, 4}},
+		{buttonUp | buttonDown | buttonA | buttonB, calibration{9, 5}},
 	} {
 		cal := defaultCalibration()
 		cal.adjust(tc.pressed)

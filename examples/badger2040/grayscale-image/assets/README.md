@@ -44,7 +44,7 @@ Build the single-image example:
 tinygo build -target=badger2040 -o badger-tainigo.uf2 ./examples/badger2040/grayscale-image
 ```
 
-It shows the image once using the accepted 10/4-frame dark/light gray
+It shows the image once using the accepted 9/5-frame dark/light gray
 calibration, then enters deep sleep. There is no slideshow or stage pause.
 
 `test_black_image.py` regenerates the asset and checks every solid black

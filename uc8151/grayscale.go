@@ -12,8 +12,8 @@ import (
 
 const (
 	DefaultBusyTimeout          = 30 * time.Second
-	DefaultLightGrayFrames byte = 4
-	DefaultDarkGrayFrames  byte = 10
+	DefaultLightGrayFrames byte = 5
+	DefaultDarkGrayFrames  byte = 9
 )
 
 var (

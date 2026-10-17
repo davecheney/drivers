@@ -39,8 +39,8 @@ blackening pulses selected by the old/new RAM bits:
 | Shade | Value | Old RAM bit | New RAM bit | LUT | Blackening frames |
 | --- | --- | --- | --- | --- | --- |
 | Black | 0 | 0 | 1 | WB | 32 |
-| Dark gray | 1 | 1 | 1 | BB | 10 |
-| Light gray | 2 | 0 | 0 | WW | 4 |
+| Dark gray | 1 | 1 | 1 | BB | 9 |
+| Light gray | 2 | 0 | 0 | WW | 5 |
 | White | 3 | 1 | 0 | BW | 0 |
 
 The waveform clock is 100Hz, the VCOM LUT is 44 bytes, and each pixel LUT is
@@ -49,11 +49,12 @@ The waveform clock is 100Hz, the VCOM LUT is 44 bytes, and each pixel LUT is
 Its MIT license is retained in `LICENSE-grayscale`.
 
 The source's 21/10-frame dark/light pulses looked too dark on the operator's
-Badger. The defaults above shorten them to 10/4 frames. Use `DarkGrayFrames`
+Badger. The defaults above shorten them to 9/5 frames. Use `DarkGrayFrames`
 and `LightGrayFrames` in `GrayscaleConfig` to tune another panel. Zero selects
 the default. The light duration must be less than dark, and dark must be
 less than the fixed 32-frame black duration. White receives no black pulse.
-The operator accepted the 10/4-frame calibration on their Badger 2040.
+The operator selected the 9/5-frame calibration using the interactive Bayer
+gradient on their Badger 2040.
 
 **This mode uses experimental custom waveforms, not vendor-supported
 temperature-compensated grayscale.** The timings were developed for room
@@ -92,7 +93,7 @@ Each gradient update hard-resets and reinitializes the controller, then displays
 solid black before the gradient. Both refreshes include the driver's full white
 reset, giving a white, black, white, gradient sequence to clear the previous image.
 Wait for the activity LED to turn off before the next press. Holding a button
-does not repeat. The example stays awake for input. Values reset to 10/4 after
+does not repeat. The example stays awake for input. Values reset to 9/5 after
 a restart and are not saved to flash.
 
 The [single-image test](../examples/badger2040/grayscale-image)

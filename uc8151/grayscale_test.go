@@ -122,7 +122,7 @@ func TestGrayscaleNew(t *testing.T) {
 	if bus.calls != 0 {
 		t.Fatal("unconfigured operations performed I/O")
 	}
-	if d.lightFrames != 4 || d.darkFrames != 10 {
+	if d.lightFrames != 5 || d.darkFrames != 9 {
 		t.Fatal("incorrect default gray pulse lengths")
 	}
 }
@@ -325,9 +325,9 @@ func checkGrayRefresh(t *testing.T, writes []grayWrite, white bool, old, current
 		}
 	} else {
 		copy(wantVCOM, []byte{0, 24, 0, 0, 0, 1})
-		copy(wantTables[0][:], []byte{0x55, 4, 0, 0, 0, 1})
+		copy(wantTables[0][:], []byte{0x55, 5, 0, 0, 0, 1})
 		copy(wantTables[2][:], []byte{0x55, 32, 0, 0, 0, 1})
-		copy(wantTables[3][:], []byte{0x55, 10, 0, 0, 0, 1})
+		copy(wantTables[3][:], []byte{0x55, 9, 0, 0, 0, 1})
 	}
 	if !bytes.Equal(writes[0].data, wantVCOM) {
 		t.Fatalf("VCOM LUT = %x, want %x", writes[0].data, wantVCOM)
@@ -485,6 +485,7 @@ func TestGrayscaleBusyDuringRefresh(t *testing.T) {
 
 func TestGrayscaleCustomPulseLengths(t *testing.T) {
 	for _, cfg := range []GrayscaleConfig{
+		{},
 		{LightGrayFrames: 1, DarkGrayFrames: 2},
 		{LightGrayFrames: 10, DarkGrayFrames: 21},
 		{LightGrayFrames: 30, DarkGrayFrames: 31},
@@ -497,10 +498,10 @@ func TestGrayscaleCustomPulseLengths(t *testing.T) {
 		}
 		light, dark := cfg.LightGrayFrames, cfg.DarkGrayFrames
 		if light == 0 {
-			light = 4
+			light = 5
 		}
 		if dark == 0 {
-			dark = 10
+			dark = 9
 		}
 		bus.writes = nil
 		if err := d.writeLUTs(false); err != nil {
