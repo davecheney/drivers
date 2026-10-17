@@ -50,14 +50,28 @@ func TestTainigoImage(t *testing.T) {
 				t.Fatalf("invalid shade at %d,%d: %v", x, y, c)
 			}
 			shades[c.R/85]++
-			if (x < 31 || x >= 264) && c.R != 255 {
-				t.Fatalf("aspect-ratio padding is not white at %d,%d", x, y)
+			if (x < 31 || x >= 264) && c.R != 170 && c.R != 255 {
+				t.Fatalf("background outside the logo is not light gray or white at %d,%d", x, y)
 			}
 		}
 	}
 	for shade, count := range shades {
 		if count == 0 {
 			t.Fatalf("shade %d is missing", shade)
+		}
+	}
+	for _, x := range []int{0, 295} {
+		var gray, white int
+		for y := 0; y < 128; y++ {
+			switch d.pixels[y*296+x].R {
+			case 170:
+				gray++
+			case 255:
+				white++
+			}
+		}
+		if gray == 0 || white == 0 {
+			t.Fatalf("sunburst rays do not reach display edge %d", x)
 		}
 	}
 }

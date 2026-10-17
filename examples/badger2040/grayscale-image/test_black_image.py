@@ -16,8 +16,9 @@ class BlackImageTests(unittest.TestCase):
     def test_solid_black_is_not_dithered(self):
         png = resvg_py.svg_to_bytes(
             svg_path=str(HERE / "assets/tainigo.svg"),
-            width=1200, height=660, dpi=96, background="white",
+            width=1184, height=512, dpi=96, background="white",
         )
+        self.assertEqual(Image.open(BytesIO(png)).size, (1184, 512))
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "tainigo.png"
             source.write_bytes(png)
