@@ -1,10 +1,12 @@
 # Tainigo test image
 
-The image uses the supplied black-lettering revision of Conejo's
-[Tainigo sticker](https://code.madriguera.me/conejo/tinyart/raw/branch/main/stickers/tainigo.svg).
-The revised source with a radial sunburst is included as `tainigo.svg`.
-The published original has blue lettering and should not be substituted for
-this black version.
+The image uses Conejo's transparent, no-bleed
+[Tainigo sticker](https://code.madriguera.me/conejo/tinyart/raw/branch/main/stickers/tainigo_nobleed_nobg.svg).
+The unmodified source is included as `tainigo_nobleed_nobg.svg`.
+`convert.py` generates `tainigo.svg` with a radial starburst behind it.
+It maps the blue lettering and shadow to solid black for this display.
+The original white outline and all path geometry are preserved. There is
+no opaque sticker background, bleed or cut outline hiding the rays.
 
 The SVG viewBox is widened to 76.3125x33 to fill the 296x128 landscape display.
 The original logo stays centered at its previous size without cropping or
@@ -20,22 +22,12 @@ width and height (`28 01 80 00`). The remainder is row-major 2bpp data, most
 significant pixel first. Shade values are 0 black, 1 dark gray, 2 light gray,
 and 3 white.
 
-To regenerate, install Pillow and resvg-py in an isolated Python environment,
+To regenerate, install Pillow 13.0.0 and resvg-py 0.5.0 in an isolated environment,
 then run from the repository root:
 
-```python
-from pathlib import Path
-import runpy
-import resvg_py
-
-Path("tainigo.png").write_bytes(resvg_py.svg_to_bytes(
-    svg_path="examples/badger2040/grayscale-image/assets/tainigo.svg",
-    width=1184, height=512, dpi=96, background="white",
-))
-convert = runpy.run_path("examples/badger2040/grayscale-slideshow/convert.py")["convert"]
-Path("examples/badger2040/grayscale-image/assets/tainigo.bin").write_bytes(
-    convert("tainigo.png", 1.0)
-)
+```sh
+python examples/badger2040/grayscale-image/convert.py
+python -m unittest discover -s examples/badger2040/grayscale-image -p test_black_image.py
 ```
 
 Build the single-image example:
@@ -47,5 +39,6 @@ tinygo build -target=badger2040 -o badger-tainigo.uf2 ./examples/badger2040/gray
 It shows the image once using the accepted 9/5-frame dark/light gray
 calibration, then enters deep sleep. There is no slideshow or stage pause.
 
-`test_black_image.py` regenerates the asset and checks every solid black
-source pixel remains black, while the image still contains all four shades.
+`test_black_image.py` checks source geometry, starburst coverage through the
+transparent areas and exact asset regeneration. Every solid black source
+pixel remains black, while the image still contains all four shades.

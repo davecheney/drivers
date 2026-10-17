@@ -164,9 +164,11 @@ The [asset instructions](../examples/badger2040/grayscale-photo/assets)
 use the same source photo and converter with `--bits 2`.
 
 The [single-image test](../examples/badger2040/grayscale-image)
-shows the supplied Tainigo sticker once, then enters deep sleep without
-stage pauses. The optional slideshow displays the four supplied photographs
-with ten seconds between completed refreshes. Every frame includes a white reset.
+shows the transparent no-bleed Tainigo logo over a full-screen white/light-gray
+starburst, using 2bpp Floyd-Steinberg and L5/D9. It displays once, then enters
+deep sleep without stage pauses. The optional slideshow displays the four
+supplied photographs with ten seconds between completed refreshes. Every
+frame includes a white reset.
 
 The [asset format and conversion instructions](../examples/badger2040/grayscale-slideshow/assets/README.md)
 describe the 296x128 images. These examples do not flash hardware as part of
