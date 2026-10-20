@@ -55,10 +55,7 @@ func (d *Device) SetBrightness(b uint8) {
 
 // Write the raw bitstring out using the WS2812 protocol.
 func (d Device) Write(buf []byte) (n int, err error) {
-	for _, c := range buf {
-		d.WriteByte(c)
-	}
-	return len(buf), nil
+	return len(buf), d.writeBytes(buf)
 }
 
 // Write the given color slice out using the WS2812 protocol.
@@ -68,25 +65,11 @@ func (d Device) WriteColors(buf []color.RGBA) (err error) {
 }
 
 func writeColorsRGB(d Device, buf []color.RGBA, brightness uint8) (err error) {
-	for _, color := range buf {
-		r, g, b := applyBrightness(color, brightness)
-		d.WriteByte(g)       // green
-		d.WriteByte(r)       // red
-		err = d.WriteByte(b) // blue
-	}
-	return
+	return d.writePixels(buf, brightness, false)
 }
 
 func writeColorsRGBA(d Device, buf []color.RGBA, brightness uint8) (err error) {
-	for _, color := range buf {
-		r, g, b := applyBrightness(color, brightness)
-
-		d.WriteByte(g)             // green
-		d.WriteByte(r)             // red
-		d.WriteByte(b)             // blue
-		err = d.WriteByte(color.A) // alpha
-	}
-	return
+	return d.writePixels(buf, brightness, true)
 }
 
 // applyBrightness scales a color by the brightness value.
