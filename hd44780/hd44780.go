@@ -184,7 +184,7 @@ func (d *Device) Display() error {
 func (d *Device) SetCursor(x, y uint8) {
 	d.cursor.x = x
 	d.cursor.y = y
-	d.SendCommand(DDRAM_SET | (x + (d.rowOffset[y] * y)))
+	d.SendCommand(DDRAM_SET | (x + d.rowOffset[y]))
 }
 
 // SetRowOffsets sets initial memory addresses coresponding to the display rows
