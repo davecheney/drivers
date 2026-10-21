@@ -55,11 +55,12 @@ func main() {
 	input := flag.String("input", "", "source video")
 	output := flag.String("output", "video.bin", "output file")
 	end := flag.String("end", "", "stop at this source timecode, such as 3:38")
-	fps := flag.Int("fps", 10, "output frame rate")
-	fit := flag.String("fit", "pad", "crop to fill the display, or pad to show the whole frame")
+	fps := flag.Int("fps", 25, "output frame rate")
+	fit := flag.String("fit", "crop", "crop to fill the display, or pad to show the whole frame")
 	trim := flag.Float64("trim", 2, "percent to remove from each edge of the source frame")
 	threshold := flag.Int("threshold", 128, "gray levels below this value are dark dots")
 	invert := flag.Bool("invert", false, "make light areas dark dots")
+	hold := flag.Int("hold", 0, "keep a cell as it is if its new tile differs by at most this many dots")
 	flag.Parse()
 	if *input == "" {
 		log.Fatal("lcdvideogen: -input is required")
@@ -120,6 +121,7 @@ func main() {
 			log.Fatal(err)
 		}
 		tiles := cut(gray, *threshold, *invert)
+		st.hold(&tiles, *hold)
 		data, m := st.encode(tiles)
 		if _, err := w.Write(data); err != nil {
 			log.Fatal(err)
@@ -188,6 +190,30 @@ type cluster struct {
 }
 
 // encode picks the glyphs for one frame and returns its delta.
+// hold replaces each tile that is close to what its cell shows now with that
+// glyph, so that small changes do not cost a CGRAM or DDRAM write.
+func (st *state) hold(tiles *[cols * rows]tile, h int) {
+	if h <= 0 {
+		return
+	}
+	for i, t := range tiles {
+		var shown tile
+		switch c := st.screen[i]; {
+		case c == charSpace:
+			shown = blankTile
+		case c == charFull:
+			shown = fullTile
+		case c < maxGlyphs && st.slotValid[c]:
+			shown = st.slots[c]
+		default:
+			continue
+		}
+		if dist(t, shown) <= h {
+			tiles[i] = shown
+		}
+	}
+}
+
 func (st *state) encode(tiles [cols * rows]tile) ([]byte, int) {
 	counts := map[tile]int{}
 	for _, t := range tiles {
