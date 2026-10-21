@@ -194,7 +194,7 @@ func (d *Device) SetCursor(x, y uint8) {
 func (d *Device) setRowOffsets() {
 	switch d.height {
 	case 1:
-		d.rowOffset = []uint8{}
+		d.rowOffset = []uint8{0x0}
 	case 2:
 		d.rowOffset = []uint8{0x0, 0x40, 0x0, 0x40}
 	case 4:
