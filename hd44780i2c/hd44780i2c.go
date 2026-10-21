@@ -121,7 +121,7 @@ func (d *Device) Home() {
 // For example, on 16x2 LCDs the range of x (column) is 0~15 and y (row) is 0~1.
 // if y is larger than actual rows, it would be set to 0 (restart from first row).
 func (d *Device) SetCursor(x, y uint8) {
-	rowOffset := []uint8{0x0, 0x40, 0x14, 0x54}
+	rowOffset := []uint8{0x0, 0x40, d.width, 0x40 + d.width}
 	if y > (d.height - 1) {
 		y = 0
 	}
