@@ -82,6 +82,7 @@ tinygo build -size short -o ./build/test.hex -target=microbit ./examples/shtc3/m
 tinygo build -size short -o ./build/test.hex -target=xiao-ble ./examples/ssd1306/
 tinygo build -size short -o ./build/test.hex -target=xiao-rp2040 ./examples/ssd1306/
 tinygo build -size short -o ./build/test.hex -target=thumby ./examples/ssd1306/
+tinygo build -size short -o ./build/test.hex -target=xiao-esp32c3 ./examples/ssd1306/lorenz
 tinygo build -size short -o ./build/test.hex -target=microbit ./examples/ssd1331/main.go
 tinygo build -size short -o ./build/test.hex -target=microbit ./examples/st7735/main.go
 tinygo build -size short -o ./build/test.hex -target=microbit ./examples/st7789/main.go
