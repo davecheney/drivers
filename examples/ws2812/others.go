@@ -1,4 +1,4 @@
-//go:build !digispark && !arduino && !arduino_uno && !xiao_esp32c3 && !teensy36
+//go:build !digispark && !arduino && !arduino_uno && !xiao_esp32c3 && !teensy36 && !arduino_due
 
 package main
 

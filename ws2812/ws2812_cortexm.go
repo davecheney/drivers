@@ -25,6 +25,9 @@ func (d Device) WriteByte(c byte) error {
 	case 64_000_000: // 64MHz
 		d.writeByte64(c)
 		return nil
+	case 84_000_000: // 84MHz, e.g. arduino-due
+		d.writeByte84(c)
+		return nil
 	case 120_000_000: // 120MHz
 		d.writeByte120(c)
 		return nil
