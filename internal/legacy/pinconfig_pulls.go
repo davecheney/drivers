@@ -1,4 +1,4 @@
-//go:build baremetal && !fe310
+//go:build baremetal && !fe310 && !avr
 
 package legacy
 
