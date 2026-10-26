@@ -21,7 +21,7 @@ func NewI2C(bus drivers.I2C) *Device {
 }
 
 // configure address for the I2C bus and allocate the buffer
-func (b *I2CBus) configure(address uint16, size int16) []byte {
+func (b *I2CBus) configure(address uint16, buffer []byte, size int16) []byte {
 	if address != 0 {
 		b.address = address
 	}

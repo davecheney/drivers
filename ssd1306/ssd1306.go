@@ -46,13 +46,16 @@ type Config struct {
 	ResetCol  ResetValue
 	ResetPage ResetValue
 	Rotation  drivers.Rotation
+	// Buffer is used as the image buffer if it is Width*Height/8 bytes, so that
+	// Configure does not allocate. Only the SPI bus uses it.
+	Buffer []byte
 }
 
 type Buser interface {
-	configure(address uint16, size int16) []byte // configure the bus and return the image buffer to use
-	command(cmd uint8) error                     // send a command to the display
-	flush() error                                // send the image to the display, faster than "tx()" in i2c case since avoids slice copy
-	tx(data []byte, isCommand bool) error        // generic transmit function
+	configure(address uint16, buffer []byte, size int16) []byte // configure the bus and return the image buffer to use
+	command(cmd uint8) error                                    // send a command to the display
+	flush() error                                               // send the image to the display, faster than "tx()" in i2c case since avoids slice copy
+	tx(data []byte, isCommand bool) error                       // generic transmit function
 }
 
 type VccMode uint8
@@ -87,7 +90,7 @@ func (d *Device) Configure(cfg Config) {
 	}
 	d.canReset = cfg.Address != 0 || d.width != 128 || d.height != 64 // I2C or not 128x64
 
-	d.buffer = d.bus.configure(cfg.Address, d.width*d.height/8)
+	d.buffer = d.bus.configure(cfg.Address, cfg.Buffer, d.width*d.height/8)
 
 	time.Sleep(100 * time.Nanosecond)
 	d.Command(DISPLAYOFF)
