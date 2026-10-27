@@ -44,5 +44,7 @@ const (
 
 const (
 	panelSettingKWBfKwrAf = 0xAF
+	panelSettingKW        = 0xBF
 	pllControl100Hz       = 0x3A
+	pllControlFast        = 0x19
 )
