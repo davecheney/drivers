@@ -31,6 +31,7 @@ type Device struct {
 	rowOffset     int16
 	columnOffset  int16
 	bufferLength  int16
+	buffer        []uint8
 	configurePins func()
 }
 
@@ -79,6 +80,9 @@ func (d *Device) Configure(cfg Config) {
 	d.bufferLength = d.width
 	if d.height > d.width {
 		d.bufferLength = d.height
+	}
+	if len(d.buffer) != int(d.bufferLength)*2 {
+		d.buffer = make([]uint8, d.bufferLength*2)
 	}
 
 	// configure GPIO pins (on baremetal targets only, for backwards compatibility)
@@ -184,7 +188,7 @@ func (d *Device) FillRectangle(x, y, width, height int16, c color.RGBA) error {
 	if d.bufferLength < dim {
 		dim = d.bufferLength
 	}
-	data := make([]uint8, dim*2)
+	data := d.buffer[:dim*2]
 
 	for i := int16(0); i < dim; i++ {
 		data[i*2] = c1
@@ -220,7 +224,7 @@ func (d *Device) FillRectangleWithBuffer(x, y, width, height int16, buffer []col
 	if d.bufferLength < dim {
 		bl = d.bufferLength
 	}
-	data := make([]uint8, bl*2)
+	data := d.buffer[:bl*2]
 
 	offset := int16(0)
 	for dim > 0 {
