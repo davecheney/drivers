@@ -56,8 +56,10 @@ func main() {
 		z += dz * dt
 
 		// Rotate by a small step to avoid math.Sin and math.Cos, which do not fit.
+		// The new cos is used for sin so the size does not grow (Minsky circle algorithm).
 		if i%64 == 0 {
-			cos, sin = cos-sin*0.004, sin+cos*0.004
+			cos -= sin * 0.004
+			sin += cos * 0.004
 		}
 		sx := int16(cx + (x*cos-y*sin)*scale)
 		sy := int16(cy - (z-25)*0.95)
