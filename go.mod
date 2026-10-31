@@ -7,6 +7,7 @@ require (
 	github.com/frankban/quicktest v1.10.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/orsinium-labs/tinymath v1.1.0
+	github.com/soypat/fat v0.2.1
 	github.com/soypat/lneto v0.4.0
 	github.com/soypat/natiu-mqtt v0.5.1
 	github.com/tinygo-org/pio v0.3.0
