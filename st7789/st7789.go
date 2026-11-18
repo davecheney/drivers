@@ -83,6 +83,7 @@ type Config struct {
 }
 
 // New creates a new ST7789 connection. The SPI wire must already be configured.
+// csPin and blPin may be machine.NoPin.
 func New(bus drivers.SPI, resetPin, dcPin, csPin, blPin machine.Pin) Device {
 	return NewOf[pixel.RGB565BE](bus, resetPin, dcPin, csPin, blPin)
 }
@@ -92,8 +93,12 @@ func New(bus drivers.SPI, resetPin, dcPin, csPin, blPin machine.Pin) Device {
 func NewOf[T Color](bus drivers.SPI, resetPin, dcPin, csPin, blPin machine.Pin) DeviceOf[T] {
 	dcPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	resetPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	csPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
-	blPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	if csPin != machine.NoPin {
+		csPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	}
+	if blPin != machine.NoPin {
+		blPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	}
 	return DeviceOf[T]{
 		bus:      bus,
 		dcPin:    dcPin,
@@ -209,7 +214,7 @@ func (d *DeviceOf[T]) Configure(cfg Config) {
 	time.Sleep(10 * time.Millisecond) //
 
 	d.endWrite()
-	d.blPin.High() // Backlight ON
+	d.EnableBacklight(true)
 }
 
 // Send a command with data to the display. It does not change the chip select
@@ -540,6 +545,9 @@ func (d *DeviceOf[T]) Size() (w, h int16) {
 
 // EnableBacklight enables or disables the backlight
 func (d *DeviceOf[T]) EnableBacklight(enable bool) {
+	if d.blPin == machine.NoPin {
+		return
+	}
 	if enable {
 		d.blPin.High()
 	} else {
