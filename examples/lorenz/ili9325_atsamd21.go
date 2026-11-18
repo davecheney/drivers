@@ -1,4 +1,4 @@
-//go:build atsamd21
+//go:build ili9325 && atsamd21
 
 package main
 

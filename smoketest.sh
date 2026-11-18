@@ -53,7 +53,24 @@ tinygo build -size short -o ./build/test.hex -target=xiao ./examples/ili9341/scr
 tinygo build -size short -o ./build/test.hex -target=pyportal ./examples/ili9341/slideshow
 tinygo build -size short -o ./build/test.hex -target=arduino-zero ./examples/ili9325/itdb02
 tinygo build -size short -o ./build/test.hex -target=arduino ./examples/ili9325/itdb02
-tinygo build -size short -o ./build/test.hex -target=arduino-zero ./examples/ili9325/lorenz
+tinygo build -size short -o ./build/test.hex -target=arduino-zero -tags=ili9325 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=wioterminal ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=pyportal ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=m5stack ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=m5stack-core2 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=pybadge ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=clue ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=gopher-badge ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=pinetime ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=thumby ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=macropad-rp2040 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=pico -tags=ssd1306 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=xiao-ble -tags=ssd1306_128x32 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=xiao-esp32c3 -tags=ssd1306_64x48 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=feather-m4 -tags=ili9341 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=waveshare-rp2040-zero -tags=st7789 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=waveshare-rp2040-pizero -tags=st7789 ./examples/lorenz
+tinygo build -size short -o ./build/test.hex -target=waveshare-rp2350-pizero -tags=st7735 ./examples/lorenz
 tinygo build -size short -o ./build/test.hex -target=circuitplay-express ./examples/lis3dh/main.go
 tinygo build -size short -o ./build/test.hex -target=nano-33-ble ./examples/lps22hb/main.go
 tinygo build -size short -o ./build/test.hex -target=microbit ./examples/lsm303agr/main.go
