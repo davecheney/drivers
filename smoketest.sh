@@ -112,6 +112,7 @@ tinygo build -size short -o ./build/test.hex -target=arduino   ./examples/ws2812
 tinygo build -size short -o ./build/test.hex -target=digispark ./examples/ws2812
 tinygo build -size short -o ./build/test.bin -target=xiao-esp32c3 ./examples/ws2812
 tinygo build -size short -o ./build/test.hex -target=teensy36 ./examples/ws2812
+tinygo build -size short -o ./build/test.bin -target=esp32s3-n16r8-devkit ./examples/ws2812/esp32s3-touch
 tinygo build -size short -o ./build/test.hex -target=arduino      ./examples/ws2812/neopixel-shield
 tinygo build -size short -o ./build/test.hex -target=arduino-zero ./examples/ws2812/neopixel-shield
 tinygo build -size short -o ./build/test.hex -target=trinket-m0 ./examples/bme280/main.go
